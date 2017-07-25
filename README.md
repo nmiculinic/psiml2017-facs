@@ -18,9 +18,7 @@ Frontal and 30 deg samples
 
 * 10 female Japanese models, grayscale
 Neutral + 6 basic emotions, 2-4 images per person
-
-~ 200 images in total
-
+* ~200 images in total
 * 256x256 grayscale images
 
 ## Pain crops
@@ -49,13 +47,16 @@ Neutral + 6 basic emotions, 2-4 images per person
 ## Project plan/timeline
 
 * Image pipeline for input data -- unified format
-* getting image, dictionary attributes, {
+* getting image, dictionary attributes, 
+```
+{
         'image': image, 
         'FACS': [1, 3, 5], 
         'source': 'Jaffe', 
         'landmarks': [(0,3), (4,5)]
         'attributes': pd.Dataframe of attributes
 }
+```
 Standardize images to faces only (Violet-Jones for example), preprocessed for background removal.
 
 * Split train/CV/test set per person.
