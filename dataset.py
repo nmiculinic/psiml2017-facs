@@ -78,8 +78,8 @@ def cohn_kanade_dataset(root_path):
                     lhs2, rhs2 = lhs1.split("000000", 1)
                     imageDIR=str(imageDIR).replace(str(rhs2),str(int(rhs2)-1))
 
-                    lhs1, rhs1 = os.path.basename(landmarksDIR).split(".", 1)
-                    lhs2, rhs2 = lhs1.split("000000", 1)
+                    #lhs1, rhs1 = os.path.basename(landmarksDIR).split(".", 1)
+                    #lhs2, rhs2 = lhs1.split("000000", 1)
                     landmarksDIR=str(landmarksDIR).replace(str(rhs2),str(int(rhs2)-1))
                 
                 with open(str(imageDIR), 'rb') as imageFile:
