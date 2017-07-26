@@ -43,7 +43,7 @@ def cohn_kanade_dataset(root_path):
     file_list_image = [y for x in os.walk(rootdir_image) for y in glob(os.path.join(x[0], '*.png'))]
 
     sol = []
-    for image_fname in tqdm(file_list_image[:50]):
+    for image_fname in tqdm(file_list_image):
         try:
             basename, ext = os.path.splitext(os.path.basename(image_fname))
             sub, seq, sequence_num = basename.split('_')
