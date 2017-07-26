@@ -6,7 +6,7 @@ import os
 from pprint import PrettyPrinter
 import argparse
 import sys
-from pathlib import Path
+from glob import glob
 
 
 pp = PrettyPrinter()
@@ -35,21 +35,21 @@ def faces_10k_dataset(root_path):
 
 
 def cohn_kanade_dataset(root_path):
-    rootdir_image = Path(os.path.join(root_path, "cohn-kanade-images"))
-    rootdir_facs = Path(os.path.join(root_path, "FACS"))
-    rootdir_emotions = Path(os.path.join(root_path, "Emotion"))
-    rootdir_landmarks = Path(os.path.join(root_path, "Landmarks"))
+    rootdir_image = os.path.join(root_path, "cohn-kanade-images")
+    rootdir_facs = os.path.join(root_path, "FACS")
+    rootdir_emotions = os.path.join(root_path, "Emotion")
+    rootdir_landmarks = os.path.join(root_path, "Landmarks")
 
-    file_list_image = [f for f in rootdir_image.resolve().glob('**/*') if f.is_file() and str(f).endswith('.png')]
+    file_list_image = [y for x in os.walk(rootdir_image) for y in glob(os.path.join(x[0], '*.png'))]
 
     sol = []
-    for image_fname in tqdm(file_list_image[:200]):
+    for image_fname in tqdm(file_list_image[:50]):
         try:
             basename, ext = os.path.splitext(os.path.basename(image_fname))
             sub, seq, sequence_num = basename.split('_')
 
             attrs = {
-                'image': np.array(Image.open(image_fname))
+                'image': np.array(Image.open(image_fname).convert("L"))
             }
 
             facs_fname = os.path.join(rootdir_facs, sub, seq, "%s_%s_%s_facs.txt" % (sub, seq, sequence_num))
@@ -61,14 +61,10 @@ def cohn_kanade_dataset(root_path):
 
             landmarks_fname = os.path.join(rootdir_landmarks, sub, seq, "%s_%s_%s_landmarks.txt" % (sub, seq, sequence_num))
             if os.path.exists(landmarks_fname):
-                attrs['landmark'] = np.loadtxt(landmarks_fname)
+                attrs['landmarks'] = np.loadtxt(landmarks_fname)
             else:
                 print(landmarks_fname, "doesn't exist; skipping!")
                 raise ValueError("Landmark must exist!")
-
-
-            #with open(str(emotionsDIR), 'rb') as emotionsFile:
-                #emotions = emotionsFile.read()
 
             sol.append(attrs)
         except Exception:
