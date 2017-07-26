@@ -23,13 +23,13 @@ def faces_10k_dataset(root_path):
     img_annot = os.path.join(root_path, "Face Annotations", "Images and Annotations")
     data = []
     for base in trange(1, 2222 + 1):
-        fname = f"{base}.jpg"
+        fname = "{}.jpg".format(base)
         attrs = {
             k: v.value
             for k, v in zip(index, next(gen_rows))
         }
         attrs['image'] = np.array(Image.open(os.path.join(img_annot, fname)))
-        attrs['landmarks'] = np.loadtxt(os.path.join(img_annot, f"{base}_landmarks.txt"))
+        attrs['landmarks'] = np.loadtxt(os.path.join(img_annot, "{}_landmarks.txt".format(base)))
         data.append(attrs)
 
 
