@@ -40,35 +40,42 @@ def cohn_kanade_dataset(root_path):
     rootdir_emotions = Path(os.path.join(root_path, "Emotion"))
     rootdir_landmarks = Path(os.path.join(root_path, "Landmarks"))
 
-    # For absolute paths instead of relative the current dir
-    file_list_image = [f for f in rootdir_image.resolve().glob('**/*') if f.is_file()]
-    file_list_facs = [f for f in rootdir_facs.resolve().glob('**/*') if f.is_file()]
-    file_list_emotions = [f for f in rootdir_emotions.resolve().glob('**/*') if f.is_file()]
-    file_list_landmarks = [f for f in rootdir_landmarks.resolve().glob('**/*') if f.is_file()]
+    file_list_image = [f for f in rootdir_image.resolve().glob('**/*') if f.is_file() and str(f).endswith('.png')]
 
     sol = []
-    for facs_fname in tqdm(file_list_facs):
+    for image_fname in tqdm(file_list_image[:200]):
         try:
-            if str(facs_fname).endswith("_facs.txt"):
-                sub, seq, sequence_num, _ = os.path.basename(facs_fname).split('_')
-                image_fname = os.path.join(rootdir_image, sub, seq, "%s_%s_%s.png" % (sub, seq, sequence_num))
-                landmarks_fname = os.path.join(rootdir_landmarks, sub, seq, "%s_%s_%s_landmarks.txt" % (sub, seq, sequence_num))
-                if not os.path.exists(image_fname):
-                    print(image_fname, "doesn't exist; skipping!")
-                    continue
+            basename, ext = os.path.splitext(os.path.basename(image_fname))
+            sub, seq, sequence_num = basename.split('_')
 
-                #with open(str(emotionsDIR), 'rb') as emotionsFile:
-                    #emotions = emotionsFile.read()
+            attrs = {
+                'image': np.array(Image.open(image_fname))
+            }
 
-                sol.append({
-                    'image': np.array(Image.open(image_fname)), 
-                    'facs': np.loadtxt(facs_fname),
-                    #'emotion': emotions,
-                    'landmarks': np.loadtxt(landmarks_fname)
-                })
+            facs_fname = os.path.join(rootdir_facs, sub, seq, "%s_%s_%s_facs.txt" % (sub, seq, sequence_num))
+            if os.path.exists(facs_fname):
+                attrs['facs'] = np.loadtxt(facs_fname)
+            else:
+                pass
+                # print(facs_fname, "doesn't exist; skipping!")
+
+            landmarks_fname = os.path.join(rootdir_landmarks, sub, seq, "%s_%s_%s_landmarks.txt" % (sub, seq, sequence_num))
+            if os.path.exists(landmarks_fname):
+                attrs['landmark'] = np.loadtxt(landmarks_fname)
+            else:
+                print(landmarks_fname, "doesn't exist; skipping!")
+                raise ValueError("Landmark must exist!")
+
+
+            #with open(str(emotionsDIR), 'rb') as emotionsFile:
+                #emotions = emotionsFile.read()
+
+            sol.append(attrs)
         except Exception:
-            print("ERROR", facs_fname)
+            print("ERROR", image_fname)
             raise
+    print(len(sol))
+    print("Has FACS components", len(list(filter(lambda x: 'facs' in x.keys(), sol))))
     return sol
 
 if __name__ == "__main__":
