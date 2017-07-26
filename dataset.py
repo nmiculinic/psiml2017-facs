@@ -31,6 +31,7 @@ def faces_10k_dataset(root_path):
         attrs['image'] = np.array(Image.open(os.path.join(img_annot, fname)))
         attrs['landmarks'] = np.loadtxt(os.path.join(img_annot, "{}_landmarks.txt".format(base)))
         data.append(attrs)
+    return data 
 
 
 def cohn_kanade_dataset(root_path):
@@ -46,43 +47,29 @@ def cohn_kanade_dataset(root_path):
     file_list_landmarks = [f for f in rootdir_landmarks.resolve().glob('**/*') if f.is_file()]
 
     sol = []
-    print(file_list_facs, rootdir_facs)
-    for facsDIR in tqdm(file_list_facs):
-        if str(facsDIR).endswith("_facs.txt"):
-            imageDIR=facsDIR 
-            imageDIR=str(imageDIR).replace("FACS","cohn-kanade-images")
-            imageDIR=str(imageDIR).replace("_facs.txt",".png")
+    for facs_fname in tqdm(file_list_facs):
+        try:
+            if str(facs_fname).endswith("_facs.txt"):
+                sub, seq, sequence_num, _ = os.path.basename(facs_fname).split('_')
+                image_fname = os.path.join(rootdir_image, sub, seq, "%s_%s_%s.png" % (sub, seq, sequence_num))
+                landmarks_fname = os.path.join(rootdir_landmarks, sub, seq, "%s_%s_%s_landmarks.txt" % (sub, seq, sequence_num))
+                if not os.path.exists(image_fname):
+                    print(image_fname, "doesn't exist; skipping!")
+                    continue
 
-            emotionsDIR=facsDIR 
-            emotionsDIR=str(emotionsDIR).replace("FACS","Emotion")
-            emotionsDIR=str(emotionsDIR).replace("_facs.txt","_emotion.txt")
+                #with open(str(emotionsDIR), 'rb') as emotionsFile:
+                    #emotions = emotionsFile.read()
 
-            landmarksDIR=facsDIR 
-            landmarksDIR=str(landmarksDIR).replace("FACS","Landmarks")
-            landmarksDIR=str(landmarksDIR).replace("_facs.txt","_landmarks.txt")
-            
-            while(not os.path.exists(imageDIR)):
-                lhs1, rhs1 = os.path.basename(imageDIR).split(".", 1)
-                lhs2, rhs2 = lhs1.split("000000", 1)
-                imageDIR=str(imageDIR).replace(str(rhs2),str(int(rhs2)-1))
-
-                #lhs1, rhs1 = os.path.basename(landmarksDIR).split(".", 1)
-                #lhs2, rhs2 = lhs1.split("000000", 1)
-                landmarksDIR=str(landmarksDIR).replace(str(rhs2),str(int(rhs2)-1))
-            
-            #with open(str(emotionsDIR), 'rb') as emotionsFile:
-                #emotions = emotionsFile.read()
-
-            with open(str(landmarksDIR), 'rb') as landmarksFile:
-                landmarks = landmarksFile.read()
-            
-            sol.append({
-                'image': np.array(Image.open(imageDIR)), 
-                'facs': np.loadtxt(facsDIR),
-                #'emotion': emotions,
-                'landmarks': landmarks
-            })
-        pp.pprint(sol[:4])
+                sol.append({
+                    'image': np.array(Image.open(image_fname)), 
+                    'facs': np.loadtxt(facs_fname),
+                    #'emotion': emotions,
+                    'landmarks': np.loadtxt(landmarks_fname)
+                })
+        except Exception:
+            print("ERROR", facs_fname)
+            raise
+    return sol
 
 if __name__ == "__main__":
     cohn_kanade_dataset(sys.argv[1])
