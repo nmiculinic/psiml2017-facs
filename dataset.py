@@ -29,13 +29,13 @@ def faces_10k_dataset(root_path):
             k: v.value
             for k, v in zip(index, next(gen_rows))
         }
-        attrs['image'] = Image.open(os.path.join(img_annot, fname))
+        attrs['image'] = Image.open(os.path.join(img_annot, fname)).copy()
         attrs['landmarks'] = np.loadtxt(os.path.join(img_annot, "{}_landmarks.txt".format(base)))
         data.append(attrs)
     return data 
 
 
-def cohn_kanade_dataset(root_path):
+def cohn_kanade_dataset(root_path, max_num=1000000):
     rootdir_image = os.path.join(root_path, "cohn-kanade-images")
     rootdir_facs = os.path.join(root_path, "FACS")
     rootdir_emotions = os.path.join(root_path, "Emotion")
@@ -44,13 +44,13 @@ def cohn_kanade_dataset(root_path):
     file_list_image = [y for x in os.walk(rootdir_image) for y in glob(os.path.join(x[0], '*.png'))]
 
     sol = []
-    for image_fname in tqdm(file_list_image[:50]):
+    for image_fname in tqdm(file_list_image[:max_num]):
         try:
             basename, ext = os.path.splitext(os.path.basename(image_fname))
             sub, seq, sequence_num = basename.split('_')
 
             attrs = {
-                'image': Image.open(image_fname)
+                'image': Image.open(image_fname).copy()
             }
 
             facs_fname = os.path.join(rootdir_facs, sub, seq, "%s_%s_%s_facs.txt" % (sub, seq, sequence_num))
@@ -79,14 +79,6 @@ def cohn_kanade_dataset(root_path):
     return sol
 
 
-def draw_landmarks(datapoint, fill_color=(255,0,0,100)):
-    sol = datapoint['image'].copy().convert("RBGA")
-    draw = ImageDraw.Draw(sol)
-    r = 1
-    for row in datapoint['landmarks']:
-        x, y = row
-        draw.ellipse((x-r, y-r, x+r, y+r), fill=fill_color)
-    return sol
 
 
 if __name__ == "__main__":
