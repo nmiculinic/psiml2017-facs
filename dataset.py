@@ -7,6 +7,7 @@ from pprint import PrettyPrinter
 import argparse
 import sys
 from glob import glob
+import logging
 
 
 pp = PrettyPrinter()
@@ -28,7 +29,7 @@ def faces_10k_dataset(root_path):
             k: v.value
             for k, v in zip(index, next(gen_rows))
         }
-        attrs['image'] = np.array(Image.open(os.path.join(img_annot, fname)))
+        attrs['image'] = Image.open(os.path.join(img_annot, fname))
         attrs['landmarks'] = np.loadtxt(os.path.join(img_annot, "{}_landmarks.txt".format(base)))
         data.append(attrs)
     return data 
@@ -43,13 +44,13 @@ def cohn_kanade_dataset(root_path):
     file_list_image = [y for x in os.walk(rootdir_image) for y in glob(os.path.join(x[0], '*.png'))]
 
     sol = []
-    for image_fname in tqdm(file_list_image):
+    for image_fname in tqdm(file_list_image[:50]):
         try:
             basename, ext = os.path.splitext(os.path.basename(image_fname))
             sub, seq, sequence_num = basename.split('_')
 
             attrs = {
-                'image': np.array(Image.open(image_fname).convert("L"))
+                'image': Image.open(image_fname)
             }
 
             facs_fname = os.path.join(rootdir_facs, sub, seq, "%s_%s_%s_facs.txt" % (sub, seq, sequence_num))
@@ -70,9 +71,23 @@ def cohn_kanade_dataset(root_path):
         except Exception:
             print("ERROR", image_fname)
             raise
-    print(len(sol))
-    print("Has FACS components", len(list(filter(lambda x: 'facs' in x.keys(), sol))))
+    logging.info(
+            "CK has %d images, %d has FACS info", 
+            len(sol),
+            len(list(filter(lambda x: 'facs' in x.keys(), sol)))
+    )
     return sol
+
+
+def draw_landmarks(datapoint, fill_color=(255,0,0,100)):
+    sol = datapoint['image'].copy().convert("RBGA")
+    draw = ImageDraw.Draw(sol)
+    r = 1
+    for row in datapoint['landmarks']:
+        x, y = row
+        draw.ellipse((x-r, y-r, x+r, y+r), fill=fill_color)
+    return sol
+
 
 if __name__ == "__main__":
     cohn_kanade_dataset(sys.argv[1])
