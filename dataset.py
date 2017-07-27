@@ -146,6 +146,81 @@ class CohnKanade:
         for x in self.datapoint_generator(self.test_file_list, batch_size):
             yield x
 
+class Pain:
+    def __init__(self, root_path, picture_size=128, train_test_split=0.7):
+        self.root_path = root_path
+        self.rootdir_image = os.path.join(root_path, "Images")
+        self.rootdir_facs = os.path.join(root_path, "Frame_Labels", "FACS")
+        #self.rootdir_emotions = os.path.join(root_path, "Emotion")
+        self.rootdir_landmarks = os.path.join(root_path, "AAM_landmarks")
+        file_list_image = [y for x in os.walk(self.rootdir_image) for y in glob(os.path.join(x[0], '*.png'))]
+
+        split_point = int(len(file_list_image) * train_test_split)
+        self.train_file_list = file_list_image[:split_point]
+        self.test_file_list = file_list_image[split_point:]
+        self.picture_size = picture_size
+
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("Train set size %d", len(self.train_file_list))
+        self.logger.info("Test set size %d",  len(self.test_file_list))
+
+    def datapoint_for_file(self, image_fname):
+        #"Z:\data\pain\Images\042-ll042\ll042t1aaaff\ll042t1aaaff001.png"
+        basename1, ext1 = os.path.splitext(os.path.basename(image_fname))
+        basename2, ext2 = os.path.splitext(ext1)
+        basename3, ext3 = os.path.splitext(ext2)
+
+        attrs = {
+            'image': Image.open(image_fname).copy()
+        }
+
+        #"Z:\data\pain\Frame_Labels\FACS\042-ll042\ll042t1aaaff\ll042t1aaaff001_facs.txt"
+        facs_fname = os.path.join(self.rootdir_facs, basename3, basename2, basename1, "_facs.txt")
+        if os.path.exists(facs_fname):
+            attrs['facs'] = np.loadtxt(facs_fname)
+        else:
+            pass
+            # print(facs_fname, "doesn't exist; skipping!")
+
+        #"Z:\data\pain\AAM_landmarks\042-ll042\ll042t1aaaff\ll042t1aaaff001_aam.txt"
+        landmarks_fname = os.path.join(self.rootdir_landmarks, basename3, basename2, basename1, "_aam.txt")
+        if os.path.exists(landmarks_fname):
+            attrs['landmarks'] = np.loadtxt(landmarks_fname)
+        else:
+            print(landmarks_fname, "doesn't exist; skipping!")
+            raise ValueError("Landmark must exist!")
+        return attrs
+
+    def datapoint_generator(self, flist, batch_size):
+        curr_batch_x = []
+        curr_batch_y = []
+        flist = flist[:]
+        while True:
+            random.shuffle(flist)
+            for image_fname in flist:
+                try:
+                    dp = self.datapoint_for_file(image_fname)
+                    dp = resize_datapoint(dp, self.picture_size)
+                    curr_batch_x.append(np.array(dp['image'])[:,:,None])
+                    curr_batch_y.append(dp['landmarks'])
+                    if len(curr_batch_x) == batch_size:
+                        yield (
+                            np.array(curr_batch_x),
+                            np.array(curr_batch_y)
+                        )
+                        curr_batch_x = []
+                        curr_batch_y = [] 
+                except Exception as ex:
+                    self.logger.error("In %s %s happend", image_fname, ex)
+
+    def train_generator(self, batch_size):
+        for x in self.datapoint_generator(self.train_file_list, batch_size):
+            yield x
+
+    def test_generator(self, batch_size):
+        for x in self.datapoint_generator(self.test_file_list, batch_size):
+            yield x
+
 if __name__ == "__main__":
     cohn_kanade_dataset(sys.argv[1])
     # faces_10k_dataset(os.path.join('.', 'data', '10k FACES'))
