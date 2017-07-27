@@ -27,7 +27,7 @@ class LandmarkPreview(Callback):
         os.makedirs(out_dir, exist_ok=True)
 
     def draw_landmarks(self, image, landmarks, r=1, fill_color=(255,0,0,100)):
-        draw = ImageDraw.Draw(image)
+        draw = ImageDraw.draw(image)
         for row in landmarks:
             x, y = row
             draw.ellipse((x-r, y-r, x+r, y+r), fill=fill_color)
@@ -100,11 +100,11 @@ def complex_model(input_shape, l2_reg):
     ))
     model.add(BatchNormalization())
     model.add(Dense(
-        68 * 2, 
+        66 * 2, 
         activation='relu'
     ))
     model.add(Lambda(lambda x: x * input_shape[0]))
-    model.add(Reshape((68, 2)))
+    model.add(Reshape((66, 2)))
     model.compile(loss=keras.losses.mean_squared_error,
                   optimizer='adam',
     )
@@ -149,8 +149,7 @@ if __name__ == "__main__":
 
     logger.info("Started data loading.")
     dataset = dataset.Pain(sys.argv[1])
-    model = simple_model((128, 128, 1))
-    # model = simple_model((240, 352, 1))
+    model = complex_model((128, 128, 1))
     logger.info("Model summary\n%s", model.summary())
     
     checkpointer = ModelCheckpoint(
