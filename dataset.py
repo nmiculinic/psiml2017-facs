@@ -51,6 +51,7 @@ def resize_datapoint(datapoint, PICTURE_SIZE):
         resized_width = round(PICTURE_SIZE*width/height)
         x_offset=round((PICTURE_SIZE-resized_width)/2)
         y_offset=0
+        assert x_offset >= 0
         landmarks[:, 0] = landmarks[:, 0] * (PICTURE_SIZE/width) + x_offset
         landmarks[:, 1] = landmarks[:, 1] * (PICTURE_SIZE/height)
     elif height<width:
@@ -58,8 +59,9 @@ def resize_datapoint(datapoint, PICTURE_SIZE):
         resized_width = PICTURE_SIZE
         x_offset=0
         y_offset=round((PICTURE_SIZE-resized_height)/2)
+        assert y_offset >= 0
         landmarks[:, 0] = landmarks[:, 0] * (PICTURE_SIZE/width)
-        landmarks[:, 1] = landmarks[:, 1] * (PICTURE_SIZE/height) + y_offset
+        landmarks[:, 1] = landmarks[:, 1] * (PICTURE_SIZE/height) # + y_offset
     else:
         resized_height = PICTURE_SIZE
         resized_width = PICTURE_SIZE
@@ -146,7 +148,7 @@ class CohnKanade:
         for x in self.datapoint_generator(self.test_file_list, batch_size):
             yield x
 
-class Pain(CohnKanade):
+class Pain:
     def __init__(self, root_path, picture_size=128, train_test_split=0.7):
         self.root_path = root_path
         self.rootdir_image = os.path.join(root_path, "Images")
@@ -171,8 +173,11 @@ class Pain(CohnKanade):
         *args, b1, b2, b3 = basename.split(os.sep)
         
         attrs = {
-            'image': Image.open(image_fname).copy()
+            'image': Image.open(image_fname).copy().convert("L")
         }
+
+        if attrs['image'].size != (352, 240):
+            raise NotImplemented
 
         #"Z:\data\pain\Frame_Labels\FACS\042-ll042\ll042t1aaaff\ll042t1aaaff001_facs.txt"
         facs_fname = os.path.join(self.rootdir_facs, b1, b2, b3 + "_facs.txt")
@@ -196,6 +201,35 @@ class Pain(CohnKanade):
             raise ValueError("Landmark must exist!")
         return attrs
 
+    def datapoint_generator(self, flist, batch_size):
+        curr_batch_x = []
+        curr_batch_y = []
+        flist = flist[:]
+        while True:
+            random.shuffle(flist)
+            for image_fname in flist:
+                try:
+                    dp = self.datapoint_for_file(image_fname)
+                    dp = resize_datapoint(dp, self.picture_size)
+                    curr_batch_x.append(np.array(dp['image'])[:,:,None] / 255.0)
+                    curr_batch_y.append(dp['landmarks'])
+                    if len(curr_batch_x) == batch_size:
+                        yield (
+                            np.array(curr_batch_x),
+                            np.array(curr_batch_y)
+                        )
+                        curr_batch_x = []
+                        curr_batch_y = [] 
+                except Exception as ex:
+                    self.logger.error("In %s %s happend", image_fname, ex)
+
+    def train_generator(self, batch_size):
+        for x in self.datapoint_generator(self.train_file_list, batch_size):
+            yield x
+
+    def test_generator(self, batch_size):
+        for x in self.datapoint_generator(self.test_file_list, batch_size):
+            yield x
 
 if __name__ == "__main__":
     cohn_kanade_dataset(sys.argv[1])

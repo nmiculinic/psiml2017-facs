@@ -150,6 +150,7 @@ if __name__ == "__main__":
     logger.info("Started data loading.")
     dataset = dataset.Pain(sys.argv[1])
     model = simple_model((128, 128, 1))
+    # model = simple_model((240, 352, 1))
     logger.info("Model summary\n%s", model.summary())
     
     checkpointer = ModelCheckpoint(
