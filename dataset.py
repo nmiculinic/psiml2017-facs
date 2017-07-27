@@ -126,7 +126,7 @@ class CohnKanade:
                 try:
                     dp = self.datapoint_for_file(image_fname)
                     dp = resize_datapoint(dp, self.picture_size)
-                    curr_batch_x.append(np.array(dp['image'])[:,:,None])
+                    curr_batch_x.append(np.array(dp['image'])[:,:,None] / 255.0)
                     curr_batch_y.append(dp['landmarks'])
                     if len(curr_batch_x) == batch_size:
                         yield (
