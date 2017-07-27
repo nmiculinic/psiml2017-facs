@@ -5,9 +5,10 @@ import keras
 import os
 import logging
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten, Reshape, BatchNormalization
+from keras.layers import Dense, Dropout, Flatten, Reshape, BatchNormalization, Lambda
 from keras.layers import Conv2D, MaxPooling2D
 from keras import backend as K
+from keras.regularizers import l2
 from keras.callbacks import ModelCheckpoint, TensorBoard, Callback
 from haikunator import Haikunator
 from PIL import Image, ImageDraw
@@ -41,47 +42,68 @@ class LandmarkPreview(Callback):
 
         val_size = data[0].shape[0]
         samples = np.random.choice(np.arange(val_size), self.batch_size)
-        x_test = data[0][samples]
-        y_targets = data[1][samples]
-        y_preds = self.model.predict(x_test)
 
-        for i, x, y_true, y_pred in zip(np.arange(val_size), x_test, y_targets, y_preds):
+        for i, x, y_true, y_pred in zip(
+                np.arange(val_size), 
+                data[0][samples],
+                data[1][samples],
+                self.model.predict(data[0][samples]),
+            ):
             img = Image.fromarray(np.squeeze(x, axis=2) * 255.0).convert("RGBA")
-            self.draw_landmarks(img, y_true, r=2, fill_color=(255,0,0,100))
-            self.draw_landmarks(img, y_pred, r=2, fill_color=(0,255,0,100))
-            img.save(os.path.join(self.out_dir, "epoh_%2d_%2d_marker.png" % (epoch, i)))
+            img.save(os.path.join(self.out_dir, "epoh_%02d_%02d_marker.png" % (epoch, i)))
+            self.draw_landmarks(img, y_true, r=1, fill_color=(255,0,0,100))
+            self.draw_landmarks(img, y_pred, r=1, fill_color=(0,255,0,100))
+            img.save(os.path.join(self.out_dir, "epoh_%02d_%02d_marker.png" % (epoch, i)))
 
 
-def complex_model(input_shape):
+def complex_model(input_shape, l2_reg):
     model = Sequential()
     model.add(Conv2D(32, kernel_size=(3, 3),
                      activation='relu',
                      padding='SAME',
+                     kernel_regularizer=l2(l2_reg),
                      input_shape=input_shape))
     model.add(BatchNormalization())
-    model.add(Conv2D(32, kernel_size=(3, 3),
-                     activation='relu',
-                     padding='SAME',
+    model.add(Conv2D(
+        32, 
+        kernel_size=(3, 3),
+        activation='relu',
+        kernel_regularizer=l2(l2_reg),
+        padding='SAME',
     ))
     model.add(BatchNormalization())
     model.add(MaxPooling2D())
-    model.add(Conv2D(64, kernel_size=(3, 3),
-                     activation='relu',
-                     padding='SAME',
+    model.add(Conv2D(
+        64, 
+        kernel_size=(3, 3),
+        activation='relu',
+        kernel_regularizer=l2(l2_reg),
+        padding='SAME',
     ))
     model.add(BatchNormalization())
     model.add(MaxPooling2D())
-    model.add(Conv2D(128, kernel_size=(3, 3),
-                     activation='relu',
-                     padding='SAME',
+    model.add(Conv2D(
+        128,
+        kernel_size=(3, 3),
+        activation='relu',
+        kernel_regularizer=l2(l2_reg),
+        padding='SAME',
     ))
     model.add(BatchNormalization())
     model.add(MaxPooling2D())
     model.add(Flatten())
     model.add(Dropout(0.5))
-    model.add(Dense(128, activation='relu'))
+    model.add(Dense(
+        128, 
+        activation='relu',
+        kernel_regularizer=l2(l2_reg),
+    ))
     model.add(BatchNormalization())
-    model.add(Dense(68 * 2, activation='relu'))
+    model.add(Dense(
+        68 * 2, 
+        activation='relu'
+    ))
+    model.add(Lambda(lambda x: x * input_shape[0]))
     model.add(Reshape((68, 2)))
     model.compile(loss=keras.losses.mean_squared_error,
                   optimizer='adam',
@@ -106,6 +128,7 @@ def simple_model(input_shape):
     model.add(Flatten())
     model.add(Dropout(0.5))
     model.add(Dense(68 * 2, activation='relu'))
+    model.add(Lambda(lambda x: x * input_shape[0]))
     model.add(Reshape((68, 2)))
     model.compile(loss=keras.losses.mean_squared_error,
                   optimizer='adam',
@@ -125,10 +148,10 @@ if __name__ == "__main__":
     logger.addHandler(fh)
 
     logger.info("Started data loading.")
-    model = simple_model((128, 128, 1))
+    dataset = dataset.CohnKanade(sys.argv[1])
+    model = complex_model((128, 128, 1), 1e-3)
     logger.info("Model summary\n%s", model.summary())
     
-    dataset = dataset.CohnKanade(sys.argv[1])
     checkpointer = ModelCheckpoint(
              os.path.join('.', 'logs', name, 'checkpoint'),
              verbose=0, 
