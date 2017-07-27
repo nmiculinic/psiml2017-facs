@@ -127,9 +127,9 @@ def simple_model(input_shape):
     model.add(MaxPooling2D())
     model.add(Flatten())
     model.add(Dropout(0.5))
-    model.add(Dense(68 * 2, activation='relu'))
+    model.add(Dense(66 * 2, activation='relu'))
     model.add(Lambda(lambda x: x * input_shape[0]))
-    model.add(Reshape((68, 2)))
+    model.add(Reshape((66, 2)))
     model.compile(loss=keras.losses.mean_squared_error,
                   optimizer='adam',
     )
@@ -148,8 +148,8 @@ if __name__ == "__main__":
     logger.addHandler(fh)
 
     logger.info("Started data loading.")
-    dataset = dataset.CohnKanade(sys.argv[1])
-    model = complex_model((128, 128, 1), 1e-3)
+    dataset = dataset.Pain(sys.argv[1])
+    model = simple_model((128, 128, 1))
     logger.info("Model summary\n%s", model.summary())
     
     checkpointer = ModelCheckpoint(

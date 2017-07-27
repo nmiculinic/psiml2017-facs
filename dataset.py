@@ -9,7 +9,7 @@ import sys
 from glob import glob
 import logging
 import random
-
+import warnings
 
 pp = PrettyPrinter()
 
@@ -146,7 +146,7 @@ class CohnKanade:
         for x in self.datapoint_generator(self.test_file_list, batch_size):
             yield x
 
-class Pain:
+class Pain(CohnKanade):
     def __init__(self, root_path, picture_size=128, train_test_split=0.7):
         self.root_path = root_path
         self.rootdir_image = os.path.join(root_path, "Images")
@@ -166,60 +166,36 @@ class Pain:
 
     def datapoint_for_file(self, image_fname):
         #"Z:\data\pain\Images\042-ll042\ll042t1aaaff\ll042t1aaaff001.png"
-        basename1, ext1 = os.path.splitext(os.path.basename(image_fname))
-        basename2, ext2 = os.path.splitext(ext1)
-        basename3, ext3 = os.path.splitext(ext2)
-
+        # self.logger.info("basename %s, sep%s", basename, os.sep)
+        basename = os.path.splitext(image_fname)[0]
+        *args, b1, b2, b3 = basename.split(os.sep)
+        
         attrs = {
             'image': Image.open(image_fname).copy()
         }
 
         #"Z:\data\pain\Frame_Labels\FACS\042-ll042\ll042t1aaaff\ll042t1aaaff001_facs.txt"
-        facs_fname = os.path.join(self.rootdir_facs, basename3, basename2, basename1, "_facs.txt")
+        facs_fname = os.path.join(self.rootdir_facs, b1, b2, b3 + "_facs.txt")
         if os.path.exists(facs_fname):
-            attrs['facs'] = np.loadtxt(facs_fname)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                attrs['facs'] = np.loadtxt(facs_fname)
+                if attrs['facs'].shape == (0,):
+                    del attrs['facs']
         else:
             pass
-            # print(facs_fname, "doesn't exist; skipping!")
 
         #"Z:\data\pain\AAM_landmarks\042-ll042\ll042t1aaaff\ll042t1aaaff001_aam.txt"
-        landmarks_fname = os.path.join(self.rootdir_landmarks, basename3, basename2, basename1, "_aam.txt")
+        landmarks_fname = os.path.join(self.rootdir_landmarks, b1, b2, b3 +  "_aam.txt")
         if os.path.exists(landmarks_fname):
             attrs['landmarks'] = np.loadtxt(landmarks_fname)
+            if attrs['landmarks'].shape != (66, 2):
+                raise ValueError("Empty landmarks!")
         else:
-            print(landmarks_fname, "doesn't exist; skipping!")
+            self.logger.error("Missing landmark %s", landmarks_fname)
             raise ValueError("Landmark must exist!")
         return attrs
 
-    def datapoint_generator(self, flist, batch_size):
-        curr_batch_x = []
-        curr_batch_y = []
-        flist = flist[:]
-        while True:
-            random.shuffle(flist)
-            for image_fname in flist:
-                try:
-                    dp = self.datapoint_for_file(image_fname)
-                    dp = resize_datapoint(dp, self.picture_size)
-                    curr_batch_x.append(np.array(dp['image'])[:,:,None])
-                    curr_batch_y.append(dp['landmarks'])
-                    if len(curr_batch_x) == batch_size:
-                        yield (
-                            np.array(curr_batch_x),
-                            np.array(curr_batch_y)
-                        )
-                        curr_batch_x = []
-                        curr_batch_y = [] 
-                except Exception as ex:
-                    self.logger.error("In %s %s happend", image_fname, ex)
-
-    def train_generator(self, batch_size):
-        for x in self.datapoint_generator(self.train_file_list, batch_size):
-            yield x
-
-    def test_generator(self, batch_size):
-        for x in self.datapoint_generator(self.test_file_list, batch_size):
-            yield x
 
 if __name__ == "__main__":
     cohn_kanade_dataset(sys.argv[1])
