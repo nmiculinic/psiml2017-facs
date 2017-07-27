@@ -78,8 +78,39 @@ def cohn_kanade_dataset(root_path, max_num=1000000):
     )
     return sol
 
+def resize_picture(self, fname, lname):
+    img = Image.open(fname)
+    landmarks = np.loadtxt(lname)
+    width, height = img.size[:2]
+    PICTURE_SIZE = 128
 
-
+    if height>width:
+        resized_height = PICTURE_SIZE
+        resized_width = round(PICTURE_SIZE*width/height)
+        x_offset=round((PICTURE_SIZE-resized_width)/2)
+        y_offset=0
+        landmarks[:, 0] = landmarks[:, 0] * (PICTURE_SIZE/width) + x_offset
+        landmarks[:, 1] = landmarks[:, 1] * (PICTURE_SIZE/height)
+    elif height<width:
+        resized_height = round(PICTURE_SIZE*height/width)
+        resized_width = PICTURE_SIZE
+        x_offset=0
+        y_offset=round((PICTURE_SIZE-resized_height)/2)
+        landmarks[:, 0] = landmarks[:, 0] * (PICTURE_SIZE/width)
+        landmarks[:, 1] = landmarks[:, 1] * (PICTURE_SIZE/height) + y_offset
+    else:
+        resized_height = PICTURE_SIZE
+        resized_width = PICTURE_SIZE
+        x_offset=y_offset=0
+        landmarks[:, 0] = landmarks[:, 0] * (PICTURE_SIZE/width)
+        landmarks[:, 1] = landmarks[:, 1] * (PICTURE_SIZE/height)
+    img = img.resize((resized_width,resized_height),Image.ANTIALIAS)
+    offset_image = np.zeros((PICTURE_SIZE,PICTURE_SIZE,3),np.uint8)
+    offset_image= Image.fromarray(offset_image)
+    offset_image.paste(img,(x_offset,y_offset))
+    #offset_image.save(imOut)
+    #np.savetxt(landOut,landmarks)
+    return offset_image, landmarks
 
 if __name__ == "__main__":
     cohn_kanade_dataset(sys.argv[1])
