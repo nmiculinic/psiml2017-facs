@@ -11,14 +11,14 @@ from keras import backend as K
 from keras.callbacks import ModelCheckpoint, TensorBoard, Callback
 from haikunator import Haikunator
 from PIL import Image, ImageDraw
-
+from logging import FileHandler
 
 haikunator = Haikunator()
 
 
 class LandmarkPreview(Callback):
     def __init__(self, out_dir,
-                 batch_size=32,):
+                 batch_size=10,):
         super().__init__()
         self.out_dir = out_dir
         self.batch_size = batch_size
@@ -47,14 +47,22 @@ class LandmarkPreview(Callback):
                 self.draw_landmarks(img, y_pred, r=2, fill_color=(0,255,0,100))
                 img.save(os.path.join(self.out_dir, "epoh_%2d_%2d_marker.png" % (epoch, i)))
 
+def train_model():
+    pass
+
 if __name__ == "__main__":
-    name = haikunator.haikunate() 
-    print(name)
     log_fmt = '[%(levelname)s] %(name)s: %(message)s'
     logging.basicConfig(level=logging.INFO, format=log_fmt)
-    logger = logging.getLogger(name)
-    logger.info("Started data loading.")
 
+
+    name = haikunator.haikunate() 
+    logger = logging.getLogger(name)
+    os.makedirs(os.path.join('.', 'logs', name), exist_ok=True)
+    fh = FileHandler(os.path.join('.', 'logs', name, 'log.txt'))
+    fh.setLevel(logging.INFO)
+    logger.addHandler(fh)
+
+    logger.info("Started data loading.")
     sol = dataset.cohn_kanade_dataset(sys.argv[1])
     for x in sol:
         x['image'] = np.array(x['image'].convert("L"))
@@ -66,35 +74,43 @@ if __name__ == "__main__":
     x_train = x_train[:, :, :, None]
 
     y_train = np.array([x['landmarks'] for x in sol])
-
-    print(x_train.shape, y_train.shape)
+    
+    logger.info("x_train.shape %s, y_train.shape %s", str(x_train.shape), str(y_train.shape))
     model = Sequential()
     model.add(Conv2D(32, kernel_size=(3, 3),
                      activation='relu',
                      padding='SAME',
                      input_shape=x_train[0].shape))
+    model.add(BatchNormalization())
     model.add(Conv2D(32, kernel_size=(3, 3),
                      activation='relu',
                      padding='SAME',
     ))
+    model.add(BatchNormalization())
     model.add(MaxPooling2D())
     model.add(Conv2D(64, kernel_size=(3, 3),
                      activation='relu',
                      padding='SAME',
     ))
+    model.add(BatchNormalization())
     model.add(MaxPooling2D())
     model.add(Conv2D(128, kernel_size=(3, 3),
                      activation='relu',
                      padding='SAME',
     ))
+    model.add(BatchNormalization())
     model.add(MaxPooling2D())
     model.add(Flatten())
+    model.add(Dropout(0.5))
+    model.add(Dense(128, activation='relu'))
+    model.add(BatchNormalization())
     model.add(Dense(68 * 2, activation='relu'))
     model.add(Reshape((68, 2)))
     model.compile(loss=keras.losses.mean_squared_error,
                   optimizer='adam',
     )
 
+    logger.info("Model summary\n%s", model.summary())
     
     checkpointer = ModelCheckpoint(
              os.path.join('.', 'logs', name, 'checkpoint'),
@@ -104,13 +120,12 @@ if __name__ == "__main__":
 
     tensorboard = TensorBoard(
         os.path.join('.', 'logs', name),
-        write_grads=True,
-        histogram_freq=3
+        # write_grads=True,
+        # histogram_freq=3
     )
 
     landmarks = LandmarkPreview(
-        os.path.join('.', 'logs', name, 'pics'),
-        32
+        os.path.join('.', 'logs', name, 'pics')
     )
 
     model.fit(x_train, y_train,
