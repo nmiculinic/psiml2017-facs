@@ -28,7 +28,7 @@ class LandmarkPreview(Callback):
         os.makedirs(out_dir, exist_ok=True)
 
     def draw_landmarks(self, image, landmarks, r=1, fill_color=(255,0,0,100)):
-        draw = ImageDraw.draw(image)
+        draw = ImageDraw.Draw(image)
         for row in landmarks:
             x, y = row
             draw.ellipse((x-r, y-r, x+r, y+r), fill=fill_color)
