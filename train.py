@@ -232,7 +232,7 @@ if __name__ == "__main__":
         i += 1
         act = random.choice(['relu', 'selu'])
         num_layers = random.randint(2, 4)
-        layers = [random.randint(1, 3) for _ in range(num_layers))]
+        layers = [random.randint(1, 3) for _ in range(num_layers)]
         reg = 10 ** (-5 * random.random())
         kwargs = {
             'l2_reg': reg,
