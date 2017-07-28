@@ -25,35 +25,39 @@ cap = cv2.VideoCapture(0)
 cap.set(3, 640)
 cap.set(4, 480)
 
+face_cascade = cv2.CascadeClassifier('.')
 while(True):   
     _, img = cap.read()
     print(img.shape)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    img = Image.fromarray(img)
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+    for (x,y,w,h) in faces:
+        img = Image.fromarray(img[y:y+h, x:x+w])
 
-    dp = {
-        'image': img,
-        'landmarks': np.zeros((66,2))
-    }
-    dp = dataset.resize_mirror_datapoint(dp, dim, False)
-    img = dp['image']
+        dp = {
+            'image': img,
+            'landmarks': np.zeros((66,2))
+        }
+        dp = dataset.resize_mirror_datapoint(dp, dim, False)
+        img = dp['image']
 
-    landmark = np.array([[
-        [0,0],
-        [50,50],
-        [100,50]
-    ]])
-    landmark = model.predict(np.array(img.convert("L"))[None, :, :, None] / 255.0)
-    landmark = np.squeeze(landmark, axis=0)
-    
-    h, w = img.size
-    img = img.resize((2*h, 2*w)).convert("L")
-    landmark *= 2
-    draw_landmarks(img, landmark, r=2)        
-    
-    # Convert RGB to BGR 
-    img = np.array(img.convert("RGB")) 
-    img = img[:, :, ::-1].copy() 
-    cv2.imshow('frame', img)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+        landmark = np.array([[
+            [0,0],
+            [50,50],
+            [100,50]
+        ]])
+        landmark = model.predict(np.array(img.convert("L"))[None, :, :, None] / 255.0)
+        landmark = np.squeeze(landmark, axis=0)
+        
+        h, w = img.size
+        img = img.resize((2*h, 2*w)).convert("L")
+        landmark *= 2
+        draw_landmarks(img, landmark, r=2)        
+        
+        # Convert RGB to BGR 
+        img = np.array(img.convert("RGB")) 
+        img = img[:, :, ::-1].copy() 
+        cv2.imshow('frame', img)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
