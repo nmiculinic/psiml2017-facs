@@ -13,6 +13,7 @@ from keras.callbacks import ModelCheckpoint, TensorBoard, Callback
 from haikunator import Haikunator
 from PIL import Image, ImageDraw
 from logging import FileHandler
+import subprocess
 
 haikunator = Haikunator()
 
@@ -27,7 +28,7 @@ class LandmarkPreview(Callback):
         os.makedirs(out_dir, exist_ok=True)
 
     def draw_landmarks(self, image, landmarks, r=1, fill_color=(255,0,0,100)):
-        draw = ImageDraw.draw(image)
+        draw = ImageDraw.Draw(image)
         for row in landmarks:
             x, y = row
             draw.ellipse((x-r, y-r, x+r, y+r), fill=fill_color)
@@ -50,7 +51,7 @@ class LandmarkPreview(Callback):
                 self.model.predict(data[0][samples]),
             ):
             img = Image.fromarray(np.squeeze(x, axis=2) * 255.0).convert("RGBA")
-            img.save(os.path.join(self.out_dir, "epoh_%02d_%02d_marker.png" % (epoch, i)))
+            # img.save(os.path.join(self.out_dir, "epoh_%02d_%02d_marker.png" % (epoch, i)))
             self.draw_landmarks(img, y_true, r=1, fill_color=(255,0,0,100))
             self.draw_landmarks(img, y_pred, r=1, fill_color=(0,255,0,100))
             img.save(os.path.join(self.out_dir, "epoh_%02d_%02d_marker.png" % (epoch, i)))
@@ -147,10 +148,14 @@ if __name__ == "__main__":
     fh.setLevel(logging.INFO)
     logger.addHandler(fh)
 
+    git_hash = subprocess.check_output(["git", "rev-parse", "HEAD"])
+    logger.info("Git commit status %s", git_hash)
     logger.info("Started data loading.")
     dataset = dataset.Pain(sys.argv[1])
-    model = complex_model((124, 124, 1), 1e-3)
-    logger.info("Model summary\n%s", model.summary())
+    # model = complex_model((124, 124, 1), 1e-3)
+    model = simple_model((124, 124, 1))
+    logger.info("Model summary\n%s", model.to_json(indent=4))
+    model.summary(print_fn=lambda x: logger.info(str(x)))
     
     checkpointer = ModelCheckpoint(
              os.path.join('.', 'logs', name, 'checkpoint'),
@@ -169,12 +174,15 @@ if __name__ == "__main__":
 
     model.fit_generator(
         generator=dataset.train_generator(32),
-        steps_per_epoch=1000,
-        epochs=100,
+        steps_per_epoch=3000,
+        epochs=30,
         verbose=1,
         validation_data=dataset.test_generator(32),
         validation_steps=1,
         callbacks = [checkpointer, tensorboard, landmarks],
-        # max_queue_size = 100
+        # max_queue_size = 100,
+        use_multiprocessing=True
     )
+    logger.info("Model training finished!")
     model.save(os.path.join('.', 'models', name + "_model.h5"))
+    logger.info("Model saved")
