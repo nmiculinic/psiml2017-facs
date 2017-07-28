@@ -243,7 +243,7 @@ if __name__ == "__main__":
     early_stop = EarlyStopping(
         monitor='val_loss', 
         min_delta=0.1, 
-        patience=50, 
+        patience=70, 
         verbose=1, 
         mode='min'
     )
@@ -251,7 +251,7 @@ if __name__ == "__main__":
     reduce_lr = ReduceLROnPlateau(
             monitor='val_loss', 
             factor=0.2,
-            patience=20, 
+            patience=30, 
             min_lr=1e-6,
             verbose=1
     )
