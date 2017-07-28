@@ -41,11 +41,7 @@ def faces_10k_dataset(root_path):
     return data 
 
 
-<<<<<<< HEAD
 def resize_datapoint(datapoint, picture_size = 128, crop_window = 4):
-=======
-def resize_datapoint(datapoint, picture_size, crop_window=4, max_angle = 15.):
->>>>>>> 16d4603b3689882115317a244ce4ab88503fd7b8
     picture_size += crop_window
     img = datapoint['image'].convert("RGB")
     landmarks = datapoint['landmarks']
@@ -95,8 +91,7 @@ def resize_datapoint(datapoint, picture_size, crop_window=4, max_angle = 15.):
     datapoint['landmarks'] = landmarks
     return datapoint
 
-def rotate_datapoint(datapoint, picture_size = 128, max_angle = 15.):
-    angle = -max_angle + 2*max_angle*random.random()
+def rotate_datapoint(datapoint, angle):
     theta = np.radians(-angle)
     offset_image = offset_image.rotate(angle)
     rotMatrix = np.array([
