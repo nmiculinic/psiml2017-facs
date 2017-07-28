@@ -64,11 +64,7 @@ class LandmarkPreview(Callback):
 
 def complex_model(input_shape, l2_reg, layers, act='relu'):
     model = Sequential()
-    model.add(Conv2D(32, kernel_size=(5, 5),
-                     activation=act,
-                     padding='SAME',
-                     kernel_regularizer=l2(l2_reg),
-                     input_shape=input_shape))
+    model.add(BatchNormalization(input_shape=input_shape))
     for i, num in enumerate(layers):
         for _ in range(num):
             model.add(Conv2D(
