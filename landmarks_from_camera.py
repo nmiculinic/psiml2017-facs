@@ -21,8 +21,11 @@ def draw_landmarks(image, landmarks, r=1, fill_color=(255,0,0,100)):
         x, y = row
         draw.ellipse((x-r, y-r, x+r, y+r), fill=fill_color)
 
+cap = cv2.VideoCapture(0)
+cap.set(3, 640)
+cap.set(4, 480)
+
 while(True):   
-    cap = cv2.VideoCapture()
     _, img = cap.read()
     print(img.shape)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -32,15 +35,15 @@ while(True):
         'image': img,
         'landmarks': np.zeros((66,2))
     }
-    dp = dataset.resize_mirror_datapoint(dp, dim)
+    dp = dataset.resize_mirror_datapoint(dp, dim, False)
     img = dp['image']
 
 #         landmark = model.predict(np.array(img.convert("L"))[None, :, :, None] / 255.0)
-    landmark = np.array([
+    landmark = np.array([[
         [0,0],
         [50,50],
         [100,50]
-    ])
+    ]])
     landmark = np.squeeze(landmark, axis=0)
     
     h, w = img.size
@@ -49,8 +52,8 @@ while(True):
     
     draw_landmarks(img, landmark, r=1)        
     
-    img = numpy.array(img) 
     # Convert RGB to BGR 
+    img = np.array(img) 
     img = img[:, :, ::-1].copy() 
     cv2.imshow('frame', img)
     if cv2.waitKey(1) & 0xFF == ord('q'):
