@@ -1,5 +1,5 @@
 import numpy as np
-from PIL import Image, ImageDraw, VideoCapture
+from PIL import Image, ImageDraw
 import cv2
 import time
 
