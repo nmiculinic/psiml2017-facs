@@ -222,10 +222,10 @@ if __name__ == "__main__":
     args = args.parse_args()
 
     name = args.name
-    if args.test:
-        model = simple_model(
-    else:
-        model = complex_model((args.picture_size, args.picture_size, 1), 1e-2)
+    # if args.test:
+    #     model = simple_model(
+    # else:
+    #     model = complex_model((args.picture_size, args.picture_size, 1), 1e-2)
 
     i = 0
     while True:
