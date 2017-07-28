@@ -7,8 +7,8 @@ from tqdm import tqdm, trange
 
 
 
-root_path = "C:\\Users\\admin\\Desktop\\DATASETS\\10k FACES"
-write_path = "C:\\Users\\admin\\Desktop\\resized pics"
+root_path = r"C:\Users\admin\Desktop\psiml2017-facs\fn059t2afunaff001.png"
+write_path = r"C:\Users\admin\Desktop\psiml2017-facs\fn059t2afunaff001_aam.txt"
 imageDIR = os.path.join(root_path, "Face Annotations", "Images and Annotations")
 for base in trange(1, 2222 + 1):
     pic_name = "{}.jpg".format(base)
@@ -73,7 +73,7 @@ for base in trange(1, 2222 + 1):
         cv2.polylines(original_image, [leftEyebrow], 1, (255,255,255))
         cv2.polylines(original_image, [faceShape], 1, (255,255,255))
         cv2.polylines(original_image, [rightEyebrow], 1, (255,255,255))
-        cv2.polylines(original_image, [nose], 1, (255,255,255))
+        cv2.polylines(original_image, [nose], 1, (255,255,255, 125))
         cv2.polylines(original_image, [leftEye], 1, (255,255,255))
         cv2.polylines(original_image, [rightEye], 1, (255,255,255))
         cv2.polylines(original_image, [upperLip], 1, (255,255,255))

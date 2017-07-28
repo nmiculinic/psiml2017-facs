@@ -41,7 +41,7 @@ def faces_10k_dataset(root_path):
     return data 
 
 
-def resize_datapoint(datapoint, PICTURE_SIZE):
+def resize_datapoint(datapoint, PICTURE_SIZE = 132, SMALLER_SIZE = 4):
     img = datapoint['image'].convert("RGB")
     landmarks = datapoint['landmarks']
     width, height = img.size[:2]
@@ -51,7 +51,7 @@ def resize_datapoint(datapoint, PICTURE_SIZE):
         resized_width = round(PICTURE_SIZE*width/height)
         x_offset=round((PICTURE_SIZE-resized_width)/2)
         y_offset=0
-        landmarks[:, 0] = landmarks[:, 0] * (PICTURE_SIZE/width) + x_offset
+        landmarks[:, 0] = landmarks[:, 0] * (PICTURE_SIZE/height) + x_offset
         landmarks[:, 1] = landmarks[:, 1] * (PICTURE_SIZE/height)
     elif height<width:
         resized_height = round(PICTURE_SIZE*height/width)
@@ -59,7 +59,7 @@ def resize_datapoint(datapoint, PICTURE_SIZE):
         x_offset=0
         y_offset=round((PICTURE_SIZE-resized_height)/2)
         landmarks[:, 0] = landmarks[:, 0] * (PICTURE_SIZE/width)
-        landmarks[:, 1] = landmarks[:, 1] * (PICTURE_SIZE/height) + y_offset
+        landmarks[:, 1] = landmarks[:, 1] * (PICTURE_SIZE/width) + y_offset
     else:
         resized_height = PICTURE_SIZE
         resized_width = PICTURE_SIZE
@@ -67,8 +67,21 @@ def resize_datapoint(datapoint, PICTURE_SIZE):
         landmarks[:, 0] = landmarks[:, 0] * (PICTURE_SIZE/width)
         landmarks[:, 1] = landmarks[:, 1] * (PICTURE_SIZE/height)
     img = img.resize((resized_width,resized_height),Image.ANTIALIAS)
-    offset_image = np.zeros((PICTURE_SIZE,PICTURE_SIZE,3),np.uint8)
-    offset_image= Image.fromarray(offset_image)
+
+    crop_x = int(random.random()*SMALLER_SIZE)
+    crop_y = int(random.random()*4)
+    mirror = int(random.random())
+    img = img.crop(
+        (crop_x, crop_y,
+        PICTURE_SIZE-SMALLER_SIZE+crop_x, PICTURE_SIZE-SMALLER_SIZE+crop_y)
+        )
+    if mirror == 1:
+        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+        landmarks[:, 0] = PICTURE_SIZE-SMALLER_SIZE - landmarks[:,0]
+        landmarks[:, 1] = PICTURE_SIZE-SMALLER_SIZE - landmarks[:,1]
+
+    offset_image = np.zeros((PICTURE_SIZE-SMALLER_SIZE,PICTURE_SIZE-SMALLER_SIZE,3),np.uint8)
+    offset_image = Image.fromarray(offset_image)
     offset_image.paste(img,(x_offset,y_offset))
 
     datapoint['image'] = offset_image.convert("L")

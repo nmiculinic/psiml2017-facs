@@ -9,21 +9,14 @@ from pprint import PrettyPrinter
 import argparse
 import sys
  
-PICTURE_SIZE = 128
-root_path = "C:\\Users\\admin\\Desktop\\DATASETS\\10k FACES"
-write_path = "C:\\Users\\admin\\Desktop\\resized pics"
-imageDIR = os.path.join(root_path, "Face Annotations", "Images and Annotations")
-for base in trange(1, 2222 + 1):
-    fname = "{}.jpg".format(base)
-    lname = "{}_landmarks.txt".format(base)
-    
-    original_image = cv2.imread(os.path.join(imageDIR, fname),0)
-    #landmarksFILE = open(os.path.join(imageDIR, lname),newline='')
-    x = y =[]
-    #print(landmarksFILE.read())  
-    landmarks = np.loadtxt(os.path.join(imageDIR, lname))
-    offset_image = np.zeros((PICTURE_SIZE,PICTURE_SIZE),np.uint8)
-    width, height = original_image.shape[:2]
+image_path = "C:\\Users\\admin\\Desktop\\DATASETS\\10k FACES"
+landmarks_path = "C:\\Users\\admin\\Desktop\\resized pics"
+
+####################################################################
+def resize_datapoint(datapoint, PICTURE_SIZE=132,SMALLER_SIZE=4):
+    img = datapoint['image'].convert("RGB")
+    landmarks = datapoint['landmarks']
+    width, height = img.size[:2]
 
     if height>width:
         resized_height = PICTURE_SIZE
@@ -45,20 +38,21 @@ for base in trange(1, 2222 + 1):
         x_offset=y_offset=0
         landmarks[:, 0] = landmarks[:, 0] * (PICTURE_SIZE/width)
         landmarks[:, 1] = landmarks[:, 1] * (PICTURE_SIZE/height)
+    img = img.resize((resized_width,resized_height),Image.ANTIALIAS)
+    
+    crop_x = int(random()*SMALLER_SIZE)
+    crop_y = int(random()*4)
+    mirror = int(random())
+    img = img.crop(0+crop_x,0+crop_y,PICTURE_SIZE-SMALLER_SIZE+crop_x,PICTURE_SIZE-SMALLER_SIZE+crop_y)
+    if mirror == 1:
+        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+        landmarks[:, 0] = PICTURE_SIZE-SMALLER_SIZE - landmarks[:,0]
+        landmarks[:, 1] = PICTURE_SIZE-SMALLER_SIZE - landmarks[:,1]
 
-    resized_image = cv2.resize(original_image, (resized_height,resized_width)) 
-    # print(original_image.shape)
-    # print(resized_image.shape)
-    # print(resized_height,resized_width)
-    # print(x_offset," ",y_offset)
-    #x_offset=y_offset=0
-    #y_offset=10
-    #offset_image=resized_image
-    #print (x_offset, " ", y_offset)
-    offset_image[x_offset:x_offset+resized_image.shape[0], y_offset:y_offset+resized_image.shape[1]] = resized_image
-    cv2.imwrite(os.path.join(write_path, fname), offset_image)
-    #print(landmarks)
-    np.savetxt(os.path.join(write_path, lname),landmarks)
-    # cv2.imshow("original", original_image)
-    # cv2.imshow("resized", offset_image)
-#cv2.waitKey(0)
+    offset_image = np.zeros(PICTURE_SIZE-SMALLER_SIZE,PICTURE_SIZE-SMALLER_SIZE,3),np.uint8)
+    offset_image= Image.fromarray(offset_image)
+    offset_image.paste(img,(x_offset,y_offset))
+
+    datapoint['image'] = offset_image.convert("L")
+    datapoint['landmarks'] = landmarks
+    return datapoint
