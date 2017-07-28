@@ -9,7 +9,7 @@ import sys
 from glob import glob
 import logging
 import random
-
+import warnings
 
 pp = PrettyPrinter()
 
@@ -51,13 +51,19 @@ def resize_datapoint(datapoint, PICTURE_SIZE = 132, SMALLER_SIZE = 4):
         resized_width = round(PICTURE_SIZE*width/height)
         x_offset=round((PICTURE_SIZE-resized_width)/2)
         y_offset=0
+<<<<<<< HEAD
         landmarks[:, 0] = landmarks[:, 0] * (PICTURE_SIZE/height) + x_offset
+=======
+        assert x_offset >= 0
+        landmarks[:, 0] = landmarks[:, 0] * (PICTURE_SIZE/width) + x_offset
+>>>>>>> b972e39db6c3dbc8217e65f543e174b855d18629
         landmarks[:, 1] = landmarks[:, 1] * (PICTURE_SIZE/height)
     elif height<width:
         resized_height = round(PICTURE_SIZE*height/width)
         resized_width = PICTURE_SIZE
         x_offset=0
         y_offset=round((PICTURE_SIZE-resized_height)/2)
+        assert y_offset >= 0
         landmarks[:, 0] = landmarks[:, 0] * (PICTURE_SIZE/width)
         landmarks[:, 1] = landmarks[:, 1] * (PICTURE_SIZE/width) + y_offset
     else:
@@ -179,28 +185,36 @@ class Pain:
 
     def datapoint_for_file(self, image_fname):
         #"Z:\data\pain\Images\042-ll042\ll042t1aaaff\ll042t1aaaff001.png"
-        basename1, ext1 = os.path.splitext(os.path.basename(image_fname))
-        basename2, ext2 = os.path.splitext(ext1)
-        basename3, ext3 = os.path.splitext(ext2)
-
+        # self.logger.info("basename %s, sep%s", basename, os.sep)
+        basename = os.path.splitext(image_fname)[0]
+        *args, b1, b2, b3 = basename.split(os.sep)
+        
         attrs = {
-            'image': Image.open(image_fname).copy()
+            'image': Image.open(image_fname).copy().convert("L")
         }
 
+        if attrs['image'].size != (352, 240):
+            raise NotImplemented
+
         #"Z:\data\pain\Frame_Labels\FACS\042-ll042\ll042t1aaaff\ll042t1aaaff001_facs.txt"
-        facs_fname = os.path.join(self.rootdir_facs, basename3, basename2, basename1, "_facs.txt")
+        facs_fname = os.path.join(self.rootdir_facs, b1, b2, b3 + "_facs.txt")
         if os.path.exists(facs_fname):
-            attrs['facs'] = np.loadtxt(facs_fname)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                attrs['facs'] = np.loadtxt(facs_fname)
+                if attrs['facs'].shape == (0,):
+                    del attrs['facs']
         else:
             pass
-            # print(facs_fname, "doesn't exist; skipping!")
 
         #"Z:\data\pain\AAM_landmarks\042-ll042\ll042t1aaaff\ll042t1aaaff001_aam.txt"
-        landmarks_fname = os.path.join(self.rootdir_landmarks, basename3, basename2, basename1, "_aam.txt")
+        landmarks_fname = os.path.join(self.rootdir_landmarks, b1, b2, b3 +  "_aam.txt")
         if os.path.exists(landmarks_fname):
             attrs['landmarks'] = np.loadtxt(landmarks_fname)
+            if attrs['landmarks'].shape != (66, 2):
+                raise ValueError("Empty landmarks!")
         else:
-            print(landmarks_fname, "doesn't exist; skipping!")
+            self.logger.error("Missing landmark %s", landmarks_fname)
             raise ValueError("Landmark must exist!")
         return attrs
 
@@ -214,7 +228,7 @@ class Pain:
                 try:
                     dp = self.datapoint_for_file(image_fname)
                     dp = resize_datapoint(dp, self.picture_size)
-                    curr_batch_x.append(np.array(dp['image'])[:,:,None])
+                    curr_batch_x.append(np.array(dp['image'])[:,:,None] / 255.0)
                     curr_batch_y.append(dp['landmarks'])
                     if len(curr_batch_x) == batch_size:
                         yield (

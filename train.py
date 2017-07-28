@@ -27,7 +27,7 @@ class LandmarkPreview(Callback):
         os.makedirs(out_dir, exist_ok=True)
 
     def draw_landmarks(self, image, landmarks, r=1, fill_color=(255,0,0,100)):
-        draw = ImageDraw.Draw(image)
+        draw = ImageDraw.draw(image)
         for row in landmarks:
             x, y = row
             draw.ellipse((x-r, y-r, x+r, y+r), fill=fill_color)
@@ -100,11 +100,11 @@ def complex_model(input_shape, l2_reg):
     ))
     model.add(BatchNormalization())
     model.add(Dense(
-        68 * 2, 
+        66 * 2, 
         activation='relu'
     ))
     model.add(Lambda(lambda x: x * input_shape[0]))
-    model.add(Reshape((68, 2)))
+    model.add(Reshape((66, 2)))
     model.compile(loss=keras.losses.mean_squared_error,
                   optimizer='adam',
     )
@@ -127,9 +127,9 @@ def simple_model(input_shape):
     model.add(MaxPooling2D())
     model.add(Flatten())
     model.add(Dropout(0.5))
-    model.add(Dense(68 * 2, activation='relu'))
+    model.add(Dense(66 * 2, activation='relu'))
     model.add(Lambda(lambda x: x * input_shape[0]))
-    model.add(Reshape((68, 2)))
+    model.add(Reshape((66, 2)))
     model.compile(loss=keras.losses.mean_squared_error,
                   optimizer='adam',
     )
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     logger.addHandler(fh)
 
     logger.info("Started data loading.")
-    dataset = dataset.CohnKanade(sys.argv[1])
+    dataset = dataset.Pain(sys.argv[1])
     model = complex_model((128, 128, 1), 1e-3)
     logger.info("Model summary\n%s", model.summary())
     
@@ -168,11 +168,11 @@ if __name__ == "__main__":
     )
 
     model.fit_generator(
-        generator=dataset.train_generator(2),
-        steps_per_epoch=5,
+        generator=dataset.train_generator(32),
+        steps_per_epoch=1000,
         epochs=100,
         verbose=1,
-        validation_data=dataset.test_generator(2),
+        validation_data=dataset.test_generator(32),
         validation_steps=1,
         callbacks = [checkpointer, tensorboard, landmarks],
         # max_queue_size = 100
