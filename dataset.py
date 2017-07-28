@@ -91,6 +91,43 @@ def resize_datapoint(datapoint, picture_size = 128, crop_window = 4):
     datapoint['landmarks'] = landmarks
     return datapoint
 
+
+def resize_mirrot_datapoint(datapoint, picture_size):
+    img = datapoint['image']
+    landmarks = datapoint['landmarks']
+    width, height = img.size[:2]
+
+    if height>width:
+        resized_height = picture_size
+        resized_width = round(picture_size*width/height)
+        x_offset=round((picture_size-resized_width)/2)
+        y_offset=0
+        assert x_offset >= 0
+        landmarks[:, 0] = landmarks[:, 0] * (picture_size/height) + x_offset
+        landmarks[:, 1] = landmarks[:, 1] * (picture_size/height)
+    else:  # height<= width:
+        resized_height = round(picture_size*height/width)
+        resized_width = picture_size
+        x_offset=0
+        y_offset=round((picture_size-resized_height)/2)
+        assert y_offset >= 0
+        landmarks[:, 0] = landmarks[:, 0] * (picture_size/width)
+        landmarks[:, 1] = landmarks[:, 1] * (picture_size/width) + y_offset
+
+    img = img.resize((resized_width,resized_height), Image.ANTIALIAS)
+    img = img.crop((0, 0, picture_size, picture_size))
+
+    if random.random() < 0.5:
+        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+        landmarks[:, 0] = picture_size - landmarks[:,0]
+    
+    offset_image = Image.new("RGB", (picture_size, picture_size), color='black')
+    offset_image.paste(img,(x_offset,y_offset))
+    datapoint['image'] = offset_image
+    datapoint['landmarks'] = landmarks
+    return datapoint
+
+
 def rotate_datapoint(datapoint, angle):
     theta = np.radians(angle)
     offset_image = datapoint['image'].rotate(angle)
