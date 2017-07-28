@@ -197,7 +197,7 @@ if __name__ == "__main__":
     model.summary(print_fn=lambda x: logger.info(str(x)))
     
     checkpointer = ModelCheckpoint(
-             os.path.join('.', 'logs', name, 'checkpoint'),
+             os.path.join('.', 'logs', name, 'weights.{epoch:02d}-{val_loss:.2f}.hdf5'),
              verbose=0, 
              save_best_only=True
     )
