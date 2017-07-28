@@ -153,7 +153,7 @@ if __name__ == "__main__":
     logger.info("Started data loading.")
     dataset = dataset.Pain(sys.argv[1])
     # model = complex_model((124, 124, 1), 1e-3)
-    model = simple_model((124, 124, 1), 1e-3)
+    model = simple_model((124, 124, 1))
     model.summary()
     logger.info("Model summary\n%s", model.to_json())
     
