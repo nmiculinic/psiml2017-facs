@@ -149,14 +149,14 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format=log_fmt)
 
     args = argparse.ArgumentParser()
-    args.add("dataset_path")
-    args.add("--name", default=haikunator.haikunate())
-    args.add("--batch_size", type=int, default=32)
-    args.add("--epohs" type=int, default=100)
-    args.add("--steps", type=int, default=1000, help="Steps per epoh")
-    args.add("--picture_size" type=int, default=128)
-    args.add("--crop_window" type=int, default=10)
-    args.add("--max_angle" type=float, default=15.0)
+    args.add_argument("dataset_path")
+    args.add_argument("--name", default=haikunator.haikunate())
+    args.add_argument("--batch_size", type=int, default=32)
+    args.add_argument("--epohs", type=int, default=100)
+    args.add_argument("--steps", type=int, default=1000, help="Steps per epoh")
+    args.add_argument("--picture_size", type=int, default=128)
+    args.add_argument("--crop_window", type=int, default=10)
+    args.add_argument("--max_angle", type=float, default=15.0)
     args = args.parse_args()
 
     name = args.name
