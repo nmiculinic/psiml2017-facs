@@ -61,74 +61,25 @@ class LandmarkPreview(Callback):
             img.save(os.path.join(self.out_dir, "epoh_%02d_%02d_marker.png" % (epoch, i)))
 
 
-def complex_model(input_shape, l2_reg):
+def complex_model(input_shape, l2_reg, layers, act='relu'):
     model = Sequential()
     model.add(Conv2D(32, kernel_size=(5, 5),
-                     activation='relu',
+                     activation=act,
                      padding='SAME',
                      kernel_regularizer=l2(l2_reg),
                      input_shape=input_shape))
-    model.add(BatchNormalization())
-    model.add(Conv2D(
-        32, 
-        kernel_size=(3, 3),
-        activation='relu',
-        kernel_regularizer=l2(l2_reg),
-        padding='SAME',
-    ))
-    model.add(BatchNormalization())
-    model.add(MaxPooling2D())
-    model.add(Conv2D(
-        64, 
-        kernel_size=(3, 3),
-        activation='relu',
-        kernel_regularizer=l2(l2_reg),
-        padding='SAME',
-    ))
-    model.add(BatchNormalization())
-    model.add(Conv2D(
-        64, 
-        kernel_size=(3, 3),
-        activation='relu',
-        kernel_regularizer=l2(l2_reg),
-        padding='SAME',
-    ))
-    model.add(BatchNormalization())
-    model.add(Conv2D(
-        64, 
-        kernel_size=(3, 3),
-        activation='relu',
-        kernel_regularizer=l2(l2_reg),
-        padding='SAME',
-    ))
-    model.add(BatchNormalization())
-    model.add(MaxPooling2D())
-    model.add(Conv2D(
-        128,
-        kernel_size=(3, 3),
-        activation='relu',
-        kernel_regularizer=l2(l2_reg),
-        padding='SAME',
-    ))
-    model.add(BatchNormalization())
-    model.add(MaxPooling2D())
-    model.add(Conv2D(
-        128,
-        kernel_size=(3, 3),
-        activation='relu',
-        kernel_regularizer=l2(l2_reg),
-        padding='SAME',
-    ))
-    model.add(BatchNormalization())
-    model.add(Conv2D(
-        128,
-        kernel_size=(3, 3),
-        activation='relu',
-        kernel_regularizer=l2(l2_reg),
-        padding='SAME',
-    ))
-    model.add(BatchNormalization())
-    model.add(MaxPooling2D())
+    for i, num in enumerate(layers):
+        for _ in range(num):
+            model.add(Conv2D(
+                32 * (2**i), 
+                kernel_size=(3, 3),
+                activation='relu',
+                kernel_regularizer=l2(l2_reg),
+                padding='SAME',
+            ))
+            if act == 'relu':
+                model.add(BatchNormalization())
+        model.add(MaxPooling2D())
     model.add(Flatten())
     model.add(Dropout(0.5))
     model.add(Dense(
@@ -141,6 +92,7 @@ def complex_model(input_shape, l2_reg):
         kernel_regularizer=l2(l2_reg),
     ))
     model.add(BatchNormalization())
+    model.add(Dropout(0.5))
     model.add(Dense(
         66 * 2, 
         activation='relu'
@@ -178,24 +130,7 @@ def simple_model(input_shape):
     return model
 
 
-if __name__ == "__main__":
-    log_fmt = '[%(levelname)s] %(name)s: %(message)s'
-    logging.basicConfig(level=logging.INFO, format=log_fmt)
-
-    args = argparse.ArgumentParser()
-    args.add_argument("dataset_path")
-    args.add_argument("--name", default=haikunator.haikunate())
-    args.add_argument("--batch_size", type=int, default=32)
-    args.add_argument("--epochs", type=int, default=1000)
-    args.add_argument("--steps", type=int, default=100, help="Steps per epoh")
-    args.add_argument("--picture_size", type=int, default=128)
-    args.add_argument("--crop_window", type=int, default=10)
-    args.add_argument("--max_angle", type=float, default=15.0)
-    args.add_argument("--num_workers", type=int, default=20)
-    args.add_argument("--test", action="store_true")
-    args = args.parse_args()
-
-    name = args.name
+def train_model(name, model, model_kwargs):
     logger = logging.getLogger(name)
     os.makedirs(os.path.join('.', 'logs', name), exist_ok=True)
     fh = FileHandler(os.path.join('.', 'logs', name, 'log.txt'))
@@ -204,7 +139,7 @@ if __name__ == "__main__":
 
     git_hash = subprocess.check_output(["git", "rev-parse", "HEAD"])
     logger.info("Git commit status %s", git_hash)
-    logger.info("Args\n%s", dataset.pp.pformat(args))
+    logger.info("Args\n%s", dataset.pp.pformat(model_kwargs))
     logger.info("Started data loading.")
     dataset = dataset.Pain(
         args.dataset_path, 
@@ -213,10 +148,6 @@ if __name__ == "__main__":
         max_angle=args.max_angle
     )
 
-    if args.test:
-        model = simple_model((args.picture_size, args.picture_size, 1))
-    else:
-        model = complex_model((args.picture_size, args.picture_size, 1), 1e-2)
     logger.info("Model summary")
     model.summary(print_fn=lambda x: logger.info(str(x)))
     
@@ -272,3 +203,43 @@ if __name__ == "__main__":
 
     model.save(os.path.join('.', 'models', name + "_model.h5"))
     logger.info("Model saved")
+
+if __name__ == "__main__":
+    log_fmt = '[%(levelname)s] %(name)s: %(message)s'
+    logging.basicConfig(level=logging.INFO, format=log_fmt)
+
+    args = argparse.ArgumentParser()
+    args.add_argument("dataset_path")
+    args.add_argument("--name", default=haikunator.haikunate())
+    args.add_argument("--batch_size", type=int, default=32)
+    args.add_argument("--epochs", type=int, default=1000)
+    args.add_argument("--steps", type=int, default=100, help="Steps per epoh")
+    args.add_argument("--picture_size", type=int, default=128)
+    args.add_argument("--crop_window", type=int, default=10)
+    args.add_argument("--max_angle", type=float, default=15.0)
+    args.add_argument("--num_workers", type=int, default=20)
+    args.add_argument("--test", action="store_true")
+    args = args.parse_args()
+
+    name = args.name
+    if args.test:
+        model = simple_model(
+    else:
+        model = complex_model((args.picture_size, args.picture_size, 1), 1e-2)
+
+    i = 0
+    while True:
+        i += 1
+        act = random.choice(['relu', 'selu'])
+        num_layers = random.randint(2, 4)
+        layers = [random.randint(1, 3) for _ in range(num_layers))
+        reg = 10 ** (-5 * random.random())
+        kwargs = {
+            'l2_reg': reg,
+            'act': act,
+            'layers': layers,
+            'input_shape': (args.picture_size, args.picture_size, 1))
+        }
+
+        model = complex_model(**kwargs)
+        train_model(args.name + "_%d" % i, model, kwargs) 
