@@ -4,6 +4,10 @@ import argparse
 args = argparse.ArgumentParser()
 args.add_argument("model_path")
 args = args.parse_args()
+import numpy as np
+from PIL import Image, ImageDraw
+import cv2
+import time
 
 model = load_model(args.model_path)
 print(model.inputs)
@@ -25,7 +29,7 @@ def resize_image(img, picture_size):
 
     return img
 
-landmarks = resize_landmarks(landmarks, camera_image_size, resized_image_size)
+def resize_landmarks(landmarks, camera_image_size, resized_image_size):
     width, height = camera_image_size[:2]
 
     if height>width:
