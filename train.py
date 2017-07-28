@@ -152,7 +152,7 @@ if __name__ == "__main__":
     args.add_argument("dataset_path")
     args.add_argument("--name", default=haikunator.haikunate())
     args.add_argument("--batch_size", type=int, default=32)
-    args.add_argument("--epohs", type=int, default=100)
+    args.add_argument("--epochs", type=int, default=100)
     args.add_argument("--steps", type=int, default=1000, help="Steps per epoh")
     args.add_argument("--picture_size", type=int, default=128)
     args.add_argument("--crop_window", type=int, default=10)
