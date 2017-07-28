@@ -104,11 +104,19 @@ def complex_model(input_shape, l2_reg):
         padding='SAME',
     ))
     model.add(BatchNormalization())
+    model.add(Conv2D(
+        128,
+        kernel_size=(3, 3),
+        activation='relu',
+        kernel_regularizer=l2(l2_reg),
+        padding='SAME',
+    ))
+    model.add(BatchNormalization())
     model.add(MaxPooling2D())
     model.add(Flatten())
     model.add(Dropout(0.5))
     model.add(Dense(
-        32, 
+        48, 
         kernel_regularizer=l2(l2_reg),
     ))
     model.add(Dense(
@@ -192,7 +200,7 @@ if __name__ == "__main__":
     if args.test:
         model = simple_model((args.picture_size, args.picture_size, 1))
     else:
-        model = complex_model((args.picture_size, args.picture_size, 1), 1e-3)
+        model = complex_model((args.picture_size, args.picture_size, 1), 1e-4)
     logger.info("Model summary")
     model.summary(print_fn=lambda x: logger.info(str(x)))
     
@@ -213,7 +221,7 @@ if __name__ == "__main__":
     early_stop = EarlyStopping(
         monitor='val_loss', 
         min_delta=0.1, 
-        patience=20, 
+        patience=50, 
         verbose=1, 
         mode='min'
     )
@@ -221,7 +229,7 @@ if __name__ == "__main__":
     reduce_lr = ReduceLROnPlateau(
             monitor='val_loss', 
             factor=0.2,
-            patience=5, 
+            patience=20, 
             min_lr=1e-6,
             verbose=1
     )
