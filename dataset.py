@@ -215,12 +215,17 @@ class Pain:
         curr_batch_x = []
         curr_batch_y = []
         flist = flist[:]
+        total = 0
+        facs = 0
         while True:
             random.shuffle(flist)
             for image_fname in flist:
                 try:
                     dp = self.datapoint_for_file(image_fname)
                     dp = resize_datapoint(dp, self.picture_size)
+                    if 'facs' in dp:
+                        facs += 1
+                    total += 1
                     curr_batch_x.append(np.array(dp['image'])[:,:,None] / 255.0)
                     curr_batch_y.append(dp['landmarks'])
                     if len(curr_batch_x) == batch_size:
@@ -230,6 +235,9 @@ class Pain:
                         )
                         curr_batch_x = []
                         curr_batch_y = [] 
+
+                    if total in [10, 20, 100] or total % 1000 == 0:
+                        self.logger.info("Facs has %f%% datapoints", facs / total)
                 except Exception as ex:
                     self.logger.error("In %s %s happend", image_fname, ex)
 
