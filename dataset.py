@@ -193,7 +193,7 @@ class CohnKanade:
             yield x
 
 class Pain:
-    def __init__(self, root_path, picture_size=128, crop_window=10, max_angle=15.0, train_test_split=0.7):
+    def __init__(self, root_path, picture_size=128, crop_window=10, max_angle=15.0, train_test_split=0.8):
         self.root_path = root_path
         self.rootdir_image = os.path.join(root_path, "Images")
         self.rootdir_facs = os.path.join(root_path, "Frame_Labels", "FACS")

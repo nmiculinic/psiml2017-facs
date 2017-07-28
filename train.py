@@ -160,7 +160,7 @@ if __name__ == "__main__":
     dataset = dataset.Pain(sys.argv[1], picture_size=128)
     # model = complex_model((128, 128, 1), 1e-3)
     model = simple_model((128, 128, 1))
-    logger.info("Model summary\n%s", model.to_json(indent=4))
+    logger.info("Model summary")
     model.summary(print_fn=lambda x: logger.info(str(x)))
     
     checkpointer = ModelCheckpoint(
@@ -180,8 +180,8 @@ if __name__ == "__main__":
 
     model.fit_generator(
         generator=dataset.train_generator(32),
-        steps_per_epoch=3000,
-        epochs=30,
+        steps_per_epoch=1000,
+        epochs=100,
         verbose=1,
         validation_data=dataset.test_generator(10),
         validation_steps=1,
