@@ -116,9 +116,9 @@ def rotate_datapoint(datapoint, angle):
 def preprocess_image(datapoint, picture_size, crop_window, max_angle):
     """Preprocesses the image, tranformation only
     """
-    datapoint = resize_mirror_datapoint(datapoint, picture_size + crop_window)
     datapoint = rotate(datapoint, -max_angle + 2*random.random()*max_angle)
-    datapoint = resize_mirror_datapoint(datapoint, picture_size)
+    datapoint = resize_mirror_datapoint(datapoint, picture_size + crop_window)
+    datapoint = crop_datapoint(datapoint, picture_size)
     return datapoint
 
 class CohnKanade:
