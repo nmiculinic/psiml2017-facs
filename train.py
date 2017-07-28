@@ -51,6 +51,8 @@ class LandmarkPreview(Callback):
                 self.model.predict(data[0][samples]),
             ):
             img = Image.fromarray(np.squeeze(x, axis=2) * 255.0).convert("RGBA")
+            w, h = img.size
+            # img = img.resize((2*w, 2*h), resample=Image.BICUBIC)
             # img.save(os.path.join(self.out_dir, "epoh_%02d_%02d_marker.png" % (epoch, i)))
             self.draw_landmarks(img, y_true, r=1, fill_color=(255,0,0,100))
             self.draw_landmarks(img, y_pred, r=1, fill_color=(0,255,0,100))
@@ -59,7 +61,7 @@ class LandmarkPreview(Callback):
 
 def complex_model(input_shape, l2_reg):
     model = Sequential()
-    model.add(Conv2D(32, kernel_size=(3, 3),
+    model.add(Conv2D(32, kernel_size=(5, 5),
                      activation='relu',
                      padding='SAME',
                      kernel_regularizer=l2(l2_reg),
@@ -95,6 +97,10 @@ def complex_model(input_shape, l2_reg):
     model.add(Flatten())
     model.add(Dropout(0.5))
     model.add(Dense(
+        32, 
+        kernel_regularizer=l2(l2_reg),
+    ))
+    model.add(Dense(
         128, 
         activation='relu',
         kernel_regularizer=l2(l2_reg),
@@ -104,7 +110,7 @@ def complex_model(input_shape, l2_reg):
         66 * 2, 
         activation='relu'
     ))
-    model.add(Lambda(lambda x: x * input_shape[0]))
+    model.add(Lambda(lambda x: x * 0.5 * input_shape[0]))
     model.add(Reshape((66, 2)))
     model.compile(loss=keras.losses.mean_squared_error,
                   optimizer='adam',
@@ -151,9 +157,9 @@ if __name__ == "__main__":
     git_hash = subprocess.check_output(["git", "rev-parse", "HEAD"])
     logger.info("Git commit status %s", git_hash)
     logger.info("Started data loading.")
-    dataset = dataset.Pain(sys.argv[1])
-    # model = complex_model((124, 124, 1), 1e-3)
-    model = simple_model((124, 124, 1))
+    dataset = dataset.Pain(sys.argv[1], picture_size=128)
+    # model = complex_model((128, 128, 1), 1e-3)
+    model = simple_model((128, 128, 1))
     logger.info("Model summary\n%s", model.to_json(indent=4))
     model.summary(print_fn=lambda x: logger.info(str(x)))
     
@@ -177,7 +183,7 @@ if __name__ == "__main__":
         steps_per_epoch=3000,
         epochs=30,
         verbose=1,
-        validation_data=dataset.test_generator(32),
+        validation_data=dataset.test_generator(10),
         validation_steps=1,
         callbacks = [checkpointer, tensorboard, landmarks],
         # max_queue_size = 100,
