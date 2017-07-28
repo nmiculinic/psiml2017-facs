@@ -155,7 +155,7 @@ if __name__ == "__main__":
     # model = complex_model((124, 124, 1), 1e-3)
     model = simple_model((124, 124, 1))
     model.summary()
-    logger.info("Model summary\n%s", model.to_json())
+    logger.info("Model summary\n%s", model.to_json(indent=4))
     
     checkpointer = ModelCheckpoint(
              os.path.join('.', 'logs', name, 'checkpoint'),
