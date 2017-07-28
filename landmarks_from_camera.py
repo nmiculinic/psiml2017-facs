@@ -3,7 +3,6 @@ from PIL import Image, ImageDraw, VideoCapture
 import cv2
 import time
 
-
 # def crop_image(img, picture_size):
 #     """Crops datapoint
 
@@ -32,7 +31,7 @@ def resize_image(img, picture_size):
 
     return img
 
-landmarks = resize_landmarks(landmarks, camera_image_size, resized_image_size)
+def resize_landmarks(landmarks, camera_image_size, resized_image_size):
     width, height = camera_image_size[:2]
 
     if height>width:
