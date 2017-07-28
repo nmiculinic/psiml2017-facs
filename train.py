@@ -51,9 +51,11 @@ class LandmarkPreview(Callback):
                 self.model.predict(data[0][samples]),
             ):
             img = Image.fromarray(np.squeeze(x, axis=2) * 255.0).convert("RGBA")
+            w, h = img.size
+            img = img.resize((2*w, 2*h), resample=Image.BICUBIC)
             # img.save(os.path.join(self.out_dir, "epoh_%02d_%02d_marker.png" % (epoch, i)))
-            self.draw_landmarks(img, y_true, r=1, fill_color=(255,0,0,100))
-            self.draw_landmarks(img, y_pred, r=1, fill_color=(0,255,0,100))
+            self.draw_landmarks(img, 2 * y_true, r=1, fill_color=(255,0,0,100))
+            self.draw_landmarks(img, 2 * y_pred, r=1, fill_color=(0,255,0,100))
             img.save(os.path.join(self.out_dir, "epoh_%02d_%02d_marker.png" % (epoch, i)))
 
 
