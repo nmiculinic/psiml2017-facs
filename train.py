@@ -157,6 +157,7 @@ if __name__ == "__main__":
     args.add_argument("--picture_size", type=int, default=128)
     args.add_argument("--crop_window", type=int, default=10)
     args.add_argument("--max_angle", type=float, default=15.0)
+    args.add_argument("--num_workers", type=int, default=20)
     args = args.parse_args()
 
     name = args.name
@@ -196,18 +197,22 @@ if __name__ == "__main__":
         validation_gen = dataset.test_generator(10)
     )
 
-    model.fit_generator(
-        generator=dataset.train_generator(args.batch_size),
-        steps_per_epoch=args.steps,
-        epochs=args.epochs,
-        verbose=1,
-        validation_data=dataset.test_generator(10),
-        validation_steps=1,
-        callbacks = [checkpointer, tensorboard, landmarks],
-        # max_queue_size = 100,
-        use_multiprocessing=True,
-        workers=16
-    )
-    logger.info("Model training finished!")
-    model.save(os.path.join('.', 'models', name + "_model.h5"))
+    try:
+        model.fit_generator(
+            generator=dataset.train_generator(args.batch_size),
+            steps_per_epoch=args.steps,
+            epochs=args.epochs,
+            verbose=1,
+            validation_data=dataset.test_generator(10),
+            validation_steps=1,
+            callbacks = [checkpointer, tensorboard, landmarks],
+            # max_queue_size = 100,
+            use_multiprocessing=True,
+            workers=args.num_workers
+        )
+        logger.info("Model training finished!")
+    except KeyboardInterrupt:
+        logger.info("Model training interrupted!!!")
+
+    complex_model.save(os.path.join('.', 'models', name + "_model.h5"))
     logger.info("Model saved")
