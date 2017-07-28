@@ -250,33 +250,33 @@ class Pain:
         flist = flist[:]
         total = 0
         facs = 0
+        flist = np.array(flist)
         while True:
-            random.shuffle(flist)
-            for image_fname in flist:
-                try:
-                    dp = self.datapoint_for_file(image_fname)
-                    dp = preprocess_image(dp, 
-                        picture_size=self.picture_size,
-                        crop_window=self.crop_window,
-                        max_angle=self.max_angle
+            image_fname = np.random.choice(flist)
+            try:
+                dp = self.datapoint_for_file(image_fname)
+                dp = preprocess_image(dp, 
+                    picture_size=self.picture_size,
+                    crop_window=self.crop_window,
+                    max_angle=self.max_angle
+                )
+                if 'facs' in dp:
+                    facs += 1
+                total += 1
+                curr_batch_x.append(np.array(dp['image'].convert("L"))[:,:,None] / 255.0)
+                curr_batch_y.append(dp['landmarks'])
+                if len(curr_batch_x) == batch_size:
+                    yield (
+                        np.array(curr_batch_x),
+                        np.array(curr_batch_y)
                     )
-                    if 'facs' in dp:
-                        facs += 1
-                    total += 1
-                    curr_batch_x.append(np.array(dp['image'].convert("L"))[:,:,None] / 255.0)
-                    curr_batch_y.append(dp['landmarks'])
-                    if len(curr_batch_x) == batch_size:
-                        yield (
-                            np.array(curr_batch_x),
-                            np.array(curr_batch_y)
-                        )
-                        curr_batch_x = []
-                        curr_batch_y = [] 
+                    curr_batch_x = []
+                    curr_batch_y = [] 
 
-                    if total in [10, 20, 100] or total % 20000 == 0:
-                        self.logger.info("Read %5d points Facs has %f%% datapoints", total, 100 * facs / total)
-                except Exception as ex:
-                    self.logger.error("In %s %s happend", image_fname, ex)
+                if total in [10, 20, 100] or total % 20000 == 0:
+                    self.logger.info("Read %5d points Facs has %f%% datapoints", total, 100 * facs / total)
+            except Exception as ex:
+                self.logger.error("In %s %s happend", image_fname, ex)
 
     def train_generator(self, batch_size):
         for x in self.datapoint_generator(self.train_file_list, batch_size):
