@@ -41,7 +41,7 @@ def faces_10k_dataset(root_path):
     return data 
 
 
-def resize_datapoint(datapoint, picture_size = 128, crop_window = 4, max_angle = 15.):
+def resize_datapoint(datapoint, picture_size, crop_window=4, max_angle = 15.):
     picture_size += crop_window
     img = datapoint['image'].convert("RGB")
     landmarks = datapoint['landmarks']
