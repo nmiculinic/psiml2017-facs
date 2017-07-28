@@ -6,6 +6,7 @@ import os
 import logging
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten, Reshape, BatchNormalization, Lambda
+from keras.models import load_model
 from keras.layers import Conv2D, MaxPooling2D
 from keras import backend as K
 from keras.regularizers import l2
@@ -120,7 +121,7 @@ def complex_model(input_shape, l2_reg):
         66 * 2, 
         activation='relu'
     ))
-    model.add(Lambda(lambda x: x * 0.5 * input_shape[0]))
+    model.add(Lambda(lambda x: x * 80.0))
     model.add(Reshape((66, 2)))
     model.compile(loss=keras.losses.mean_squared_error,
                   optimizer='adam',
@@ -212,7 +213,7 @@ if __name__ == "__main__":
     early_stop = EarlyStopping(
         monitor='val_loss', 
         min_delta=0.1, 
-        patience=10, 
+        patience=20, 
         verbose=1, 
         mode='min'
     )
@@ -225,6 +226,9 @@ if __name__ == "__main__":
             verbose=1
     )
 
+    model.save("/tmp/test_save_keras")
+    load_model("/tmp/test_save_keras")
+    logger.info("Successfully tested save/load")
     try:
         model.fit_generator(
             generator=dataset.train_generator(args.batch_size),
