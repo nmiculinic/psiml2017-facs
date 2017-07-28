@@ -176,8 +176,8 @@ if __name__ == "__main__":
         crop_window=args.crop_window,
         max_angle=args.max_angle
     )
-    # model = complex_model((128, 128, 1), 1e-3)
-    model = simple_model((128, 128, 1))
+    model = complex_model((args.picture_size, args.picture_size, 1), 1e-3)
+    # model = simple_model((128, 128, 1))
     logger.info("Model summary")
     model.summary(print_fn=lambda x: logger.info(str(x)))
     
