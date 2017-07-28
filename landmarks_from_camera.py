@@ -1,45 +1,19 @@
-from keras.models import load_model
 import argparse
+import numpy as np
+import cv2
+import time
+import dataset
+from PIL import Image, ImageDraw
+# from keras.models import load_model
 
 args = argparse.ArgumentParser()
 args.add_argument("model_path")
 args = args.parse_args()
-import numpy as np
-from PIL import Image, ImageDraw
-import cv2
-import time
 
-model = load_model(args.model_path)
-print(model.inputs)
-
-
-def resize_image(img, picture_size):
-    img = datapoint['image']
-    width, height = img.size[:2]
-
-    if height>width:
-        resized_height = picture_size
-        resized_width = round(picture_size*width/height)
-    else:  # height<= width:
-        resized_height = round(picture_size*height/width)
-        resized_width = picture_size
-
-    img = img.resize((resized_width,resized_height), Image.ANTIALIAS)
-    #img = img.crop((0, 0, picture_size, picture_size))
-
-    return img
-
-def resize_landmarks(landmarks, camera_image_size, resized_image_size):
-    width, height = camera_image_size[:2]
-
-    if height>width:
-        landmarks[:, 0] = landmarks[:, 0] * (height/picture_size)
-        landmarks[:, 1] = landmarks[:, 1] * (height/picture_size)
-    else:  
-        landmarks[:, 0] = landmarks[:, 0] * (width/picture_size)
-        landmarks[:, 1] = landmarks[:, 1] * (width/picture_size)
-
-    return landmarks
+# model = load_model(args.model_path)
+# print(model.inputs)
+# dim = int(model.input.shape[1])
+dim = 160
 
 def draw_landmarks(image, landmarks, r=1, fill_color=(255,0,0,100)):
     draw = ImageDraw.Draw(image)
@@ -47,18 +21,37 @@ def draw_landmarks(image, landmarks, r=1, fill_color=(255,0,0,100)):
         x, y = row
         draw.ellipse((x-r, y-r, x+r, y+r), fill=fill_color)
 
-def landmarks_from_camera(img_size = 160):
-    while(True):   
-        cap = cv2.VideoCapture()
-        _, img = cap.read()
-        img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-        img = Image.fromarray(img)
-        #cap.set(3, img_size)
-        #cap.set(4, img_size)
-        landmarks_img = img.resize_image(img, img_size)
-        landmarks = f(landmarks_img)
-        landmarks = resize_landmarks(landmarks = landmarks,camera_image_size = img.size, resized_image_size = img_size)
-        draw_landmarks(img,landmarks)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+while(True):   
+    cap = cv2.VideoCapture()
+    _, img = cap.read()
+    print(img.shape)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = Image.fromarray(img)
 
+    dp = {
+        'image': img,
+        'landmarks': np.zeros((66,2))
+    }
+    dp = dataset.resize_mirror_datapoint(dp, dim)
+    img = dp['image']
+
+#         landmark = model.predict(np.array(img.convert("L"))[None, :, :, None] / 255.0)
+    landmark = np.array([
+        [0,0],
+        [50,50],
+        [100,50]
+    ])
+    landmark = np.squeeze(landmark, axis=0)
+    
+    h, w = img.size
+    img = img.resize((2*h, 2*w))
+    landmark *= 2
+    
+    draw_landmarks(img, landmark, r=1)        
+    
+    img = numpy.array(img) 
+    # Convert RGB to BGR 
+    img = img[:, :, ::-1].copy() 
+    cv2.imshow('frame', img)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break

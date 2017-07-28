@@ -57,7 +57,7 @@ def crop_datapoint(datapoint, picture_size):
     return datapoint
 
 
-def resize_mirror_datapoint(datapoint, picture_size):
+def resize_mirror_datapoint(datapoint, picture_size, mirror=True):
     """Resize and randomly horizontally mirror
     """
     img = datapoint['image']
@@ -84,7 +84,7 @@ def resize_mirror_datapoint(datapoint, picture_size):
     img = img.resize((resized_width,resized_height), Image.ANTIALIAS)
     img = img.crop((0, 0, picture_size, picture_size))
 
-    if random.random() < 0.5:
+    if mirror and random.random() < 0.5:
         img = img.transpose(Image.FLIP_LEFT_RIGHT)
         landmarks[:, 0] = picture_size - landmarks[:,0]
     
