@@ -95,10 +95,19 @@ def complex_model(input_shape, l2_reg):
     ))
     model.add(BatchNormalization())
     model.add(MaxPooling2D())
+    model.add(Conv2D(
+        128,
+        kernel_size=(3, 3),
+        activation='relu',
+        kernel_regularizer=l2(l2_reg),
+        padding='SAME',
+    ))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D())
     model.add(Flatten())
     model.add(Dropout(0.5))
     model.add(Dense(
-        16, 
+        32, 
         kernel_regularizer=l2(l2_reg),
     ))
     model.add(Dense(
