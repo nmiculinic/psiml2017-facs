@@ -92,20 +92,21 @@ def resize_datapoint(datapoint, picture_size = 128, crop_window = 4):
     return datapoint
 
 def rotate_datapoint(datapoint, angle):
-    theta = np.radians(-angle)
+    theta = np.radians(angle)
     offset_image = datapoint['image'].rotate(angle)
+    landmarks = datapoint['landmarks']
     rotMatrix = np.array([
         [np.cos(theta),-np.sin(theta)],
         [np.sin(theta), np.cos(theta)]
     ])
 
-    landmarks_offset = np.array(datapoint['image'].size / 2.0).reshape((1, 2))
+    landmarks_offset = np.array(datapoint['image'].size).reshape((1, 2)) / 2.0
     landmarks -= landmarks_offset
     landmarks = np.dot(landmarks, rotMatrix)
     landmarks += landmarks_offset
 
-    datapoint['image'] = offset_image.convert("L")
     datapoint['landmarks'] = landmarks
+    datapoint['image'] = offset_image
     return datapoint
     
 class CohnKanade:
