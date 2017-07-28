@@ -93,15 +93,13 @@ def resize_datapoint(datapoint, picture_size = 128, crop_window = 4):
 
 def rotate_datapoint(datapoint, angle):
     theta = np.radians(-angle)
-    offset_image = offset_image.rotate(angle)
+    offset_image = datapoint['image'].rotate(angle)
     rotMatrix = np.array([
         [np.cos(theta),-np.sin(theta)],
         [np.sin(theta), np.cos(theta)]
     ])
-    landmarks_offset = np.array([0, 0]).reshape((1,2))
-    landmarks_offset = np.mean(landmarks, axis=0)
 
-    landmarks_offset[0,0] = picture_size/2   #sum(landmarks[:,0])/landmarks
+    landmarks_offset = np.array(datapoint['image'].size / 2.0).reshape((1, 2))
     landmarks -= landmarks_offset
     landmarks = np.dot(landmarks, rotMatrix)
     landmarks += landmarks_offset
