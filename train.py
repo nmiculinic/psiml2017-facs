@@ -159,8 +159,8 @@ def train_model(name, model, model_kwargs):
     )
     tensorboard = TensorBoard(
         os.path.join('.', 'logs', name),
-        write_grads=True,
-        histogram_freq=3
+        # write_grads=True,
+        # histogram_freq=3
     )
     landmarks = LandmarkPreview(
         os.path.join('.', 'logs', name, 'pics'),

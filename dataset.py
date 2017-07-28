@@ -274,7 +274,7 @@ class Pain:
                     curr_batch_y = [] 
 
                 if total in [10, 20, 100] or total % 20000 == 0:
-                    pass
+                    np.random.seed([int(str(x)) for x in os.urandom(10)])
                     # self.logger.info("Read %5d points Facs has %f%% datapoints", total, 100 * facs / total)
             except Exception as ex:
                 self.logger.error("In %s %s happend", image_fname, ex)
