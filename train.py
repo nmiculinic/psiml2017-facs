@@ -9,7 +9,7 @@ from keras.layers import Dense, Dropout, Flatten, Reshape, BatchNormalization, L
 from keras.layers import Conv2D, MaxPooling2D
 from keras import backend as K
 from keras.regularizers import l2
-from keras.callbacks import ModelCheckpoint, TensorBoard, Callback
+from keras.callbacks import ModelCheckpoint, TensorBoard, Callback, EarlyStopping, ReduceLROnPlateau
 from haikunator import Haikunator
 from PIL import Image, ImageDraw
 from logging import FileHandler
