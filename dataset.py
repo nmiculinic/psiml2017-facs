@@ -51,12 +51,8 @@ def resize_datapoint(datapoint, PICTURE_SIZE = 132, SMALLER_SIZE = 4):
         resized_width = round(PICTURE_SIZE*width/height)
         x_offset=round((PICTURE_SIZE-resized_width)/2)
         y_offset=0
-<<<<<<< HEAD
-        landmarks[:, 0] = landmarks[:, 0] * (PICTURE_SIZE/height) + x_offset
-=======
         assert x_offset >= 0
-        landmarks[:, 0] = landmarks[:, 0] * (PICTURE_SIZE/width) + x_offset
->>>>>>> b972e39db6c3dbc8217e65f543e174b855d18629
+        landmarks[:, 0] = landmarks[:, 0] * (PICTURE_SIZE/height) + x_offset
         landmarks[:, 1] = landmarks[:, 1] * (PICTURE_SIZE/height)
     elif height<width:
         resized_height = round(PICTURE_SIZE*height/width)
@@ -192,9 +188,6 @@ class Pain:
         attrs = {
             'image': Image.open(image_fname).copy().convert("L")
         }
-
-        if attrs['image'].size != (352, 240):
-            raise NotImplemented
 
         #"Z:\data\pain\Frame_Labels\FACS\042-ll042\ll042t1aaaff\ll042t1aaaff001_facs.txt"
         facs_fname = os.path.join(self.rootdir_facs, b1, b2, b3 + "_facs.txt")
