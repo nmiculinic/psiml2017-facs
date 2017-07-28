@@ -41,7 +41,7 @@ def faces_10k_dataset(root_path):
     return data 
 
 
-def resize_datapoint(datapoint, picture_size = 128, crop_window = 4, max_angle = 15.):
+def resize_datapoint(datapoint, picture_size = 128, crop_window = 4):
     picture_size += crop_window
     img = datapoint['image'].convert("RGB")
     landmarks = datapoint['landmarks']
@@ -86,16 +86,26 @@ def resize_datapoint(datapoint, picture_size = 128, crop_window = 4, max_angle =
     offset_image = np.zeros((picture_size-crop_window,picture_size-crop_window,3),np.uint8)
     offset_image = Image.fromarray(offset_image)
     offset_image.paste(img,(x_offset,y_offset))
+    
+    datapoint['image'] = offset_image.convert("L")
+    datapoint['landmarks'] = landmarks
+    return datapoint
 
+def rotate_datapoint(datapoint, picture_size = 128, max_angle = 15.):
     angle = -max_angle + 2*max_angle*random.random()
     theta = np.radians(-angle)
     offset_image = offset_image.rotate(angle)
-    rotMatrix = np.array([[np.cos(theta),-np.sin(theta)],[np.sin(theta),np.cos(theta)]])
-    landmarks[:, 0] -= (picture_size-crop_window)/2
-    landmarks[:, 1] -= (picture_size-crop_window)/2
-    landmarks = (np.dot(rotMatrix,landmarks.T).T)
-    landmarks[:, 0] += (picture_size-crop_window)/2
-    landmarks[:, 1] += (picture_size-crop_window)/2
+    rotMatrix = np.array([
+        [np.cos(theta),-np.sin(theta)],
+        [np.sin(theta), np.cos(theta)]
+    ])
+    landmarks_offset = np.array([0, 0]).reshape((1,2))
+    landmarks_offset = np.mean(landmarks, axis=0)
+
+    landmarks_offset[0,0] = picture_size/2   #sum(landmarks[:,0])/landmarks
+    landmarks -= landmarks_offset
+    landmarks = np.dot(landmarks, rotMatrix)
+    landmarks += landmarks_offset
 
     datapoint['image'] = offset_image.convert("L")
     datapoint['landmarks'] = landmarks
