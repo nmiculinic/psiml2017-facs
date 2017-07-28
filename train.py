@@ -161,8 +161,8 @@ if __name__ == "__main__":
     args.add_argument("dataset_path")
     args.add_argument("--name", default=haikunator.haikunate())
     args.add_argument("--batch_size", type=int, default=32)
-    args.add_argument("--epochs", type=int, default=100)
-    args.add_argument("--steps", type=int, default=1000, help="Steps per epoh")
+    args.add_argument("--epochs", type=int, default=1000)
+    args.add_argument("--steps", type=int, default=100, help="Steps per epoh")
     args.add_argument("--picture_size", type=int, default=128)
     args.add_argument("--crop_window", type=int, default=10)
     args.add_argument("--max_angle", type=float, default=15.0)
@@ -209,6 +209,21 @@ if __name__ == "__main__":
         os.path.join('.', 'logs', name, 'pics'),
         validation_gen = dataset.test_generator(10)
     )
+    early_stop = EarlyStopping(
+        monitor='val_loss', 
+        min_delta=0.1, 
+        patience=10, 
+        verbose=1, 
+        mode='min'
+    )
+
+    reduce_lr = ReduceLROnPlateau(
+            monitor='val_loss', 
+            factor=0.2,
+            patience=5, 
+            min_lr=1e-6,
+            verbose=1
+    )
 
     try:
         model.fit_generator(
@@ -218,7 +233,7 @@ if __name__ == "__main__":
             verbose=1,
             validation_data=dataset.test_generator(10),
             validation_steps=1,
-            callbacks = [checkpointer, tensorboard, landmarks],
+            callbacks = [checkpointer, tensorboard, landmarks, early_stop, reduce_lr],
             # max_queue_size = 100,
             use_multiprocessing=True,
             workers=args.num_workers
