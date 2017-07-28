@@ -238,7 +238,7 @@ if __name__ == "__main__":
             'l2_reg': reg,
             'act': act,
             'layers': layers,
-            'input_shape': (args.picture_size, args.picture_size, 1))
+            'input_shape': (args.picture_size, args.picture_size, 1)
         }
 
         model = complex_model(**kwargs)
