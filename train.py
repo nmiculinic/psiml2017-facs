@@ -69,6 +69,12 @@ def complex_model(input_shape, l2_reg):
                      kernel_regularizer=l2(l2_reg),
                      input_shape=input_shape))
     model.add(BatchNormalization())
+    model.add(Conv2D(32, kernel_size=(5, 5),
+                     activation='relu',
+                     padding='SAME',
+                     kernel_regularizer=l2(l2_reg),
+                     input_shape=input_shape))
+    model.add(BatchNormalization())
     model.add(Conv2D(
         32, 
         kernel_size=(3, 3),
@@ -78,6 +84,22 @@ def complex_model(input_shape, l2_reg):
     ))
     model.add(BatchNormalization())
     model.add(MaxPooling2D())
+    model.add(Conv2D(
+        64, 
+        kernel_size=(3, 3),
+        activation='relu',
+        kernel_regularizer=l2(l2_reg),
+        padding='SAME',
+    ))
+    model.add(BatchNormalization())
+    model.add(Conv2D(
+        64, 
+        kernel_size=(3, 3),
+        activation='relu',
+        kernel_regularizer=l2(l2_reg),
+        padding='SAME',
+    ))
+    model.add(BatchNormalization())
     model.add(Conv2D(
         64, 
         kernel_size=(3, 3),
