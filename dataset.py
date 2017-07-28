@@ -237,7 +237,7 @@ class Pain:
                         curr_batch_y = [] 
 
                     if total in [10, 20, 100] or total % 1000 == 0:
-                        self.logger.info("Facs has %f%% datapoints", facs / total)
+                        self.logger.info("Read %5d points Facs has %f%% datapoints", total, 100 * facs / total)
                 except Exception as ex:
                     self.logger.error("In %s %s happend", image_fname, ex)
 
