@@ -25,13 +25,14 @@ cap = cv2.VideoCapture(0)
 cap.set(3, 640)
 cap.set(4, 480)
 
-face_cascade = cv2.CascadeClassifier('.')
+face_cascade = cv2.CascadeClassifier('./haarcascade_frontalface_alt.xml')
 while(True):   
-    _, img = cap.read()
+    #_, img = cap.read()
+    img = cv2.imread(r"C:\Users\admin\Desktop\random\fn059t2afunaff001.png",cv2.IMREAD_COLOR)
     print(img.shape)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+    #img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    faces = face_cascade.detectMultiScale(img_gray, 1.3, 5)
     for (x,y,w,h) in faces:
         img = Image.fromarray(img[y:y+h, x:x+w])
 
