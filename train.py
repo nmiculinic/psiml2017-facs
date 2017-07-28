@@ -167,6 +167,7 @@ if __name__ == "__main__":
     args.add_argument("--crop_window", type=int, default=10)
     args.add_argument("--max_angle", type=float, default=15.0)
     args.add_argument("--num_workers", type=int, default=20)
+    args.add_argument("--test", action="store_true")
     args = args.parse_args()
 
     name = args.name
@@ -186,8 +187,11 @@ if __name__ == "__main__":
         crop_window=args.crop_window,
         max_angle=args.max_angle
     )
-    model = complex_model((args.picture_size, args.picture_size, 1), 1e-3)
-    # model = simple_model((128, 128, 1))
+
+    if args.test:
+        model = simple_model((args.picture_size, args.picture_size, 1))
+    else:
+        model = complex_model((args.picture_size, args.picture_size, 1), 1e-3)
     logger.info("Model summary")
     model.summary(print_fn=lambda x: logger.info(str(x)))
     
@@ -223,5 +227,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         logger.info("Model training interrupted!!!")
 
-    complex_model.save(os.path.join('.', 'models', name + "_model.h5"))
+    model.save(os.path.join('.', 'models', name + "_model.h5"))
     logger.info("Model saved")
