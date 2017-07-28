@@ -53,7 +53,7 @@ def crop_datapoint(datapoint, picture_size):
     crop_y = random.randint(0, h - picture_size)
     img = img.crop((crop_x, crop_y, picture_size + crop_x, picture_size + crop_y))    
     datapoint['image'] = img
-    datapoint['landmarks'] =np.array([crop_x, crop_y]).reshape((1,2))
+    datapoint['landmarks']-=np.array([crop_x, crop_y]).reshape((1,2))
     return datapoint
 
 
