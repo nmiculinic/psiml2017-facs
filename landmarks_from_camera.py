@@ -1,16 +1,13 @@
+from keras.models import load_model
+import argparse
 
+args = argparse.ArgumentParser()
+args.add_argument("model_path")
+args = args.parse_args()
 
-# def crop_image(img, picture_size):
-#     """Crops datapoint
+model = load_model(args.model_path)
+print(model.inputs)
 
-#     :param datapoint: Datapoint to transform
-#     :param picture_size: Output picture square dimension
-#     """
-#     w, h = img.size
-#     crop_x = #random.randint(0, w - picture_size)
-#     crop_y = #random.randint(0, h - picture_size)
-#     img = img.crop((crop_x, crop_y, picture_size + crop_x, picture_size + crop_y))    
-#     return img
 
 def resize_image(img, picture_size):
     img = datapoint['image']
