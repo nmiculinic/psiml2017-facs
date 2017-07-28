@@ -168,7 +168,7 @@ if __name__ == "__main__":
 
     git_hash = subprocess.check_output(["git", "rev-parse", "HEAD"])
     logger.info("Git commit status %s", git_hash)
-    logget.info("Args\n%s", dataset.pp.pformat(args))
+    logger.info("Args\n%s", dataset.pp.pformat(args))
     logger.info("Started data loading.")
     dataset = dataset.Pain(
         args.dataset_path, 
