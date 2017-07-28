@@ -142,7 +142,7 @@ def train_model(name, model, model_kwargs):
     logger.info("Git commit status %s", git_hash)
     logger.info("Args\n%s", dataset.pp.pformat(model_kwargs))
     logger.info("Started data loading.")
-    dataset = dataset.Pain(
+    ds = dataset.Pain(
         args.dataset_path, 
         picture_size=args.picture_size, 
         crop_window=args.crop_window,
@@ -164,7 +164,7 @@ def train_model(name, model, model_kwargs):
     )
     landmarks = LandmarkPreview(
         os.path.join('.', 'logs', name, 'pics'),
-        validation_gen = dataset.test_generator(10)
+        validation_gen = ds.test_generator(10)
     )
     early_stop = EarlyStopping(
         monitor='val_loss', 
@@ -187,11 +187,11 @@ def train_model(name, model, model_kwargs):
     logger.info("Successfully tested save/load")
     try:
         model.fit_generator(
-            generator=dataset.train_generator(args.batch_size),
+            generator=ds.train_generator(args.batch_size),
             steps_per_epoch=args.steps,
             epochs=args.epochs,
             verbose=1,
-            validation_data=dataset.test_generator(10),
+            validation_data=ds.test_generator(10),
             validation_steps=1,
             callbacks = [checkpointer, tensorboard, landmarks, early_stop, reduce_lr],
             # max_queue_size = 100,
