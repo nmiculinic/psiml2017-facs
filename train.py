@@ -4,6 +4,7 @@ import numpy as np
 import keras
 import os
 import logging
+import random
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten, Reshape, BatchNormalization, Lambda
 from keras.models import load_model
