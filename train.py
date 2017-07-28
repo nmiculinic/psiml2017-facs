@@ -149,7 +149,7 @@ if __name__ == "__main__":
 
     logger.info("Started data loading.")
     dataset = dataset.Pain(sys.argv[1])
-    model = complex_model((128, 128, 1))
+    model = complex_model((128, 128, 1), 1e-3)
     logger.info("Model summary\n%s", model.summary())
     
     checkpointer = ModelCheckpoint(
@@ -168,11 +168,11 @@ if __name__ == "__main__":
     )
 
     model.fit_generator(
-        generator=dataset.train_generator(2),
-        steps_per_epoch=5,
+        generator=dataset.train_generator(32),
+        steps_per_epoch=1000,
         epochs=100,
         verbose=1,
-        validation_data=dataset.test_generator(2),
+        validation_data=dataset.test_generator(32),
         validation_steps=1,
         callbacks = [checkpointer, tensorboard, landmarks],
         # max_queue_size = 100
