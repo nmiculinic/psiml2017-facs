@@ -14,6 +14,7 @@ from haikunator import Haikunator
 from PIL import Image, ImageDraw
 from logging import FileHandler
 import subprocess
+import argparse
 
 haikunator = Haikunator()
 
@@ -147,7 +148,18 @@ if __name__ == "__main__":
     log_fmt = '[%(levelname)s] %(name)s: %(message)s'
     logging.basicConfig(level=logging.INFO, format=log_fmt)
 
-    name = haikunator.haikunate() 
+    args = argparse.ArgumentParser()
+    args.add("dataset_path")
+    args.add("--name", default=haikunator.haikunate())
+    args.add("--batch_size", type=int, default=32)
+    args.add("--epohs" type=int, default=100)
+    args.add("--steps", type=int, default=1000, help="Steps per epoh")
+    args.add("--picture_size" type=int, default=128)
+    args.add("--crop_window" type=int, default=10)
+    args.add("--max_angle" type=float, default=15.0)
+    args = args.parse_args()
+
+    name = args.name
     logger = logging.getLogger(name)
     os.makedirs(os.path.join('.', 'logs', name), exist_ok=True)
     fh = FileHandler(os.path.join('.', 'logs', name, 'log.txt'))
@@ -156,8 +168,14 @@ if __name__ == "__main__":
 
     git_hash = subprocess.check_output(["git", "rev-parse", "HEAD"])
     logger.info("Git commit status %s", git_hash)
+    logget.info("Args\n%s", dataset.pp.pformat(args))
     logger.info("Started data loading.")
-    dataset = dataset.Pain(sys.argv[1], picture_size=128)
+    dataset = dataset.Pain(
+        args.dataset_path, 
+        picture_size=args.picture_size, 
+        crop_window=args.crop_window,
+        max_angle=args.max_angle
+    )
     # model = complex_model((128, 128, 1), 1e-3)
     model = simple_model((128, 128, 1))
     logger.info("Model summary")
@@ -179,9 +197,9 @@ if __name__ == "__main__":
     )
 
     model.fit_generator(
-        generator=dataset.train_generator(32),
-        steps_per_epoch=1000,
-        epochs=100,
+        generator=dataset.train_generator(args.batch_size),
+        steps_per_epoch=args.steps,
+        epochs=args.epochs,
         verbose=1,
         validation_data=dataset.test_generator(10),
         validation_steps=1,
