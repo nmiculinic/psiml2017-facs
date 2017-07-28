@@ -146,7 +146,7 @@ def simple_model(input_shape):
     model.add(Flatten())
     model.add(Dropout(0.5))
     model.add(Dense(66 * 2, activation='relu'))
-    model.add(Lambda(lambda x: x * input_shape[0]))
+    model.add(Lambda(lambda x: 80.0 * x))
     model.add(Reshape((66, 2)))
     model.compile(loss=keras.losses.mean_squared_error,
                   optimizer='adam',
