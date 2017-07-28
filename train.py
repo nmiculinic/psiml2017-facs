@@ -98,7 +98,7 @@ def complex_model(input_shape, l2_reg):
     model.add(Flatten())
     model.add(Dropout(0.5))
     model.add(Dense(
-        32, 
+        16, 
         kernel_regularizer=l2(l2_reg),
     ))
     model.add(Dense(
@@ -188,8 +188,8 @@ if __name__ == "__main__":
     )
     tensorboard = TensorBoard(
         os.path.join('.', 'logs', name),
-        # write_grads=True,
-        # histogram_freq=3
+        write_grads=True,
+        histogram_freq=3
     )
     landmarks = LandmarkPreview(
         os.path.join('.', 'logs', name, 'pics'),
@@ -205,7 +205,8 @@ if __name__ == "__main__":
         validation_steps=1,
         callbacks = [checkpointer, tensorboard, landmarks],
         # max_queue_size = 100,
-        use_multiprocessing=True
+        use_multiprocessing=True,
+        workers=16
     )
     logger.info("Model training finished!")
     model.save(os.path.join('.', 'models', name + "_model.h5"))
