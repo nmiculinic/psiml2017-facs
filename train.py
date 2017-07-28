@@ -69,12 +69,6 @@ def complex_model(input_shape, l2_reg):
                      kernel_regularizer=l2(l2_reg),
                      input_shape=input_shape))
     model.add(BatchNormalization())
-    model.add(Conv2D(32, kernel_size=(5, 5),
-                     activation='relu',
-                     padding='SAME',
-                     kernel_regularizer=l2(l2_reg),
-                     input_shape=input_shape))
-    model.add(BatchNormalization())
     model.add(Conv2D(
         32, 
         kernel_size=(3, 3),
@@ -222,7 +216,7 @@ if __name__ == "__main__":
     if args.test:
         model = simple_model((args.picture_size, args.picture_size, 1))
     else:
-        model = complex_model((args.picture_size, args.picture_size, 1), 1e-4)
+        model = complex_model((args.picture_size, args.picture_size, 1), 1e-2)
     logger.info("Model summary")
     model.summary(print_fn=lambda x: logger.info(str(x)))
     
