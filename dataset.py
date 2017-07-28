@@ -41,58 +41,25 @@ def faces_10k_dataset(root_path):
     return data 
 
 
-def resize_datapoint(datapoint, picture_size = 128, crop_window = 4):
-    picture_size += crop_window
-    img = datapoint['image'].convert("RGB")
-    landmarks = datapoint['landmarks']
-    width, height = img.size[:2]
+def crop_datapoint(datapoint, picture_size):
+    """Crops datapoint
 
-    if height>width:
-        resized_height = picture_size
-        resized_width = round(picture_size*width/height)
-        x_offset=round((picture_size-resized_width)/2)
-        y_offset=0
-        assert x_offset >= 0
-        landmarks[:, 0] = landmarks[:, 0] * (picture_size/height) + x_offset
-        landmarks[:, 1] = landmarks[:, 1] * (picture_size/height)
-    elif height<width:
-        resized_height = round(picture_size*height/width)
-        resized_width = picture_size
-        x_offset=0
-        y_offset=round((picture_size-resized_height)/2)
-        assert y_offset >= 0
-        landmarks[:, 0] = landmarks[:, 0] * (picture_size/width)
-        landmarks[:, 1] = landmarks[:, 1] * (picture_size/width) + y_offset
-    else:
-        resized_height = picture_size
-        resized_width = picture_size
-        x_offset=y_offset=0
-        landmarks[:, 0] = landmarks[:, 0] * (picture_size/width)
-        landmarks[:, 1] = landmarks[:, 1] * (picture_size/height)
-    img = img.resize((resized_width,resized_height),Image.ANTIALIAS)
-
-    crop_x = int(random.random()*crop_window)
-    crop_y = int(random.random()*4)
-    mirror = int(random.random())
-    img = img.crop(
-        (crop_x, crop_y,
-        picture_size-crop_window+crop_x, picture_size-crop_window+crop_y)
-        )
-    if mirror == 1:
-        img = img.transpose(Image.FLIP_LEFT_RIGHT)
-        landmarks[:, 0] = picture_size-crop_window - landmarks[:,0]
-        landmarks[:, 1] = picture_size-crop_window - landmarks[:,1]
-
-    offset_image = np.zeros((picture_size-crop_window,picture_size-crop_window,3),np.uint8)
-    offset_image = Image.fromarray(offset_image)
-    offset_image.paste(img,(x_offset,y_offset))
-    
-    datapoint['image'] = offset_image.convert("L")
-    datapoint['landmarks'] = landmarks
+    :param datapoint: Datapoint to transform
+    :param picture_size: Output picture square dimension
+    """
+    img = datapoint['image']
+    w, h = img.size
+    crop_x = random.randint(0, w - picture_size)
+    crop_y = random.randint(0, h - picture_size)
+    img = img.crop((crop_x, crop_y, picture_size + crop_x, picture_size + crop_y))    
+    datapoint['image'] = img
+    datapoint['landmarks'] =np.array([crop_x, crop_y]).reshape((1,2))
     return datapoint
 
 
-def resize_mirrot_datapoint(datapoint, picture_size):
+def resize_mirror_datapoint(datapoint, picture_size):
+    """Resize and randomly horizontally mirror
+    """
     img = datapoint['image']
     landmarks = datapoint['landmarks']
     width, height = img.size[:2]
@@ -130,7 +97,7 @@ def resize_mirrot_datapoint(datapoint, picture_size):
 
 def rotate_datapoint(datapoint, angle):
     theta = np.radians(angle)
-    offset_image = datapoint['image'].rotate(angle)
+    offset_image = datapoint['image'].rotate(angle, resample=Image.BICUBIC)
     landmarks = datapoint['landmarks']
     rotMatrix = np.array([
         [np.cos(theta),-np.sin(theta)],
@@ -145,7 +112,15 @@ def rotate_datapoint(datapoint, angle):
     datapoint['landmarks'] = landmarks
     datapoint['image'] = offset_image
     return datapoint
-    
+
+def preprocess_image(datapoint, picture_size, crop_window, max_angle):
+    """Preprocesses the image, tranformation only
+    """
+    datapoint = resize_mirror_datapoint(datapoint, picture_size + crop_window)
+    datapoint = rotate(datapoint, -max_angle + 2*random.random()*max_angle)
+    datapoint = resize_mirror_datapoint(datapoint, picture_size)
+    return datapoint
+
 class CohnKanade:
     def __init__(self, root_path, picture_size=128, train_test_split=0.7):
         self.root_path = root_path
@@ -218,7 +193,7 @@ class CohnKanade:
             yield x
 
 class Pain:
-    def __init__(self, root_path, picture_size=128, train_test_split=0.7):
+    def __init__(self, root_path, picture_size=128, crop_window=10, max_angle=15.0, train_test_split=0.7):
         self.root_path = root_path
         self.rootdir_image = os.path.join(root_path, "Images")
         self.rootdir_facs = os.path.join(root_path, "Frame_Labels", "FACS")
@@ -230,6 +205,8 @@ class Pain:
         self.train_file_list = file_list_image[:split_point]
         self.test_file_list = file_list_image[split_point:]
         self.picture_size = picture_size
+        self.crop_window = crop_window 
+        self.max_angle = max_angle
 
         self.logger = logging.getLogger(__name__)
         self.logger.info("Train set size %d", len(self.train_file_list))
@@ -278,11 +255,15 @@ class Pain:
             for image_fname in flist:
                 try:
                     dp = self.datapoint_for_file(image_fname)
-                    dp = resize_datapoint(dp, self.picture_size)
+                    dp = preprocess_image(dp, 
+                        picture_size=self.picture_size,
+                        crop_window=self.crop_window,
+                        max_angle=self.max_angle
+                    )
                     if 'facs' in dp:
                         facs += 1
                     total += 1
-                    curr_batch_x.append(np.array(dp['image'])[:,:,None] / 255.0)
+                    curr_batch_x.append(np.array(dp['image'].convert("L"))[:,:,None] / 255.0)
                     curr_batch_y.append(dp['landmarks'])
                     if len(curr_batch_x) == batch_size:
                         yield (
