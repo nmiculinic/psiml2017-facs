@@ -40,6 +40,33 @@ def faces_10k_dataset(root_path):
         data.append(attrs)
     return data 
 
+def random_crop(datapoint picture_size=128):
+    img = datapoint['image']
+    lmk = datapoint['landmarks']
+    for _ in range(50):
+#         print(img.size)
+        m = np.floor(np.min(lmk, axis=0)).astype(np.int)
+        M = np.ceil(np.max(lmk, axis=0)).astype(np.int)
+        x0, y0 = np.random.randint(m[0]), np.random.randint(m[1])
+        sz_m = max(M[0] - x0, M[1] - y0)
+        w, h = img.size
+        sz_M = min(w - x0, h - y0)
+        
+        if sz_m >= sz_M:
+            continue
+        
+#         print(m, M)
+#         print(x0, y0)
+#         print(sz_m, sz_M)
+        sq_size = np.random.randint(sz_m, sz_M)
+#         print(sq_size)
+
+        img = img.crop([x0, y0, x0 + sq_size, y0 + sq_size]).resize((goal_size, goal_size))
+        lmk = lmk - np.array([x0, y0]).reshape(1, 2)
+        lmk *= goal_size / sq_size
+        datapoint['image'] = img
+        datapoint['landmarks'] = lmk
+        return img, lmk
 
 def crop_datapoint(datapoint, picture_size):
     """Crops datapoint
@@ -255,10 +282,10 @@ class Pain:
             image_fname = np.random.choice(flist)
             try:
                 dp = self.datapoint_for_file(image_fname)
-                dp = preprocess_image(dp, 
+                dp = random_crop(dp, 
                     picture_size=self.picture_size,
-                    crop_window=self.crop_window,
-                    max_angle=self.max_angle
+                    # crop_window=self.crop_window,
+                    # max_angle=self.max_angle
                 )
                 if 'facs' in dp:
                     facs += 1
