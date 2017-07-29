@@ -68,3 +68,20 @@ Standardize images to faces only (Violet-Jones for example), preprocessed for ba
 * Showcase best/worst model mistakes/examples
 * Draw some conclusions, make some metrics
 
+
+# Lesson learned/project postmortem
+
+* We only used Pain dataset, due to time constraints
+* Despite good performance in training, and testing, on real webcam we observed unsatisfactory perfomance
+* Keras fit_generator....
+        * Multiprocessing is false by default --> Make true due to GIL
+        * Default workers=1; no cool when generating new images is expensivish and you're running on 32 CPU workstation
+        * Keras uses python multiprocessing queues, instead of TF ones, leadning to IO bottleneck between python->TF CPU->TF GPU data moving; We observed unsaturated GPU
+* Need to clear TF graph after long hyperparameter search
+```python
+from keras import backend as K
+K.clear_session()
+```
+* Assuming saving and restoring works...yeah not. We encountered a problem where keras happily saves the model, which he couldn't restore. There was issues with python closures. With this lesson learnt, we tested saving&restoring at training beginning
+* Deep SELU worked the best among models; even with weak regularization. We tested Relu+BN and SELU outperformed it.
+* Beginning BN helps accounting for initial input data weirdness
