@@ -40,7 +40,7 @@ def faces_10k_dataset(root_path):
         data.append(attrs)
     return data 
 
-def random_crop(datapoint picture_size=128):
+def random_crop(datapoint, picture_size=128):
     img = datapoint['image']
     lmk = datapoint['landmarks']
     for _ in range(50):

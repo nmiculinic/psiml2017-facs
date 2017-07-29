@@ -224,19 +224,29 @@ if __name__ == "__main__":
     # else:
     #     model = complex_model((args.picture_size, args.picture_size, 1), 1e-2)
 
-    i = 0
-    while True:
-        i += 1
-        act = random.choice(['relu', 'selu'])
-        num_layers = random.randint(2, 4)
-        layers = [random.randint(1, 3) for _ in range(num_layers)]
-        reg = 10 ** (-5 * random.random())
-        kwargs = {
-            'l2_reg': reg,
-            'act': act,
-            'layers': layers,
-            'input_shape': (args.picture_size, args.picture_size, 1)
-        }
+    kwargs = {
+        'l2_reg': 1e-5,
+        'act': 'selu',
+        'layers': [2,3,2,3],
+        'input_shape': (args.picture_size, args.picture_size, 1)
+    }
 
-        model = complex_model(**kwargs)
-        train_model(args.name + "_%d" % i, model, kwargs) 
+    model = complex_model(**kwargs)
+    train_model(args.name, model, kwargs) 
+
+    i = 0
+#    while True:
+#        i += 1
+#        act = random.choice(['relu', 'selu'])
+#        num_layers = random.randint(2, 4)
+#        layers = [random.randint(1, 3) for _ in range(num_layers)]
+#        reg = 10 ** (-5 * random.random())
+#        kwargs = {
+#            'l2_reg': reg,
+#            'act': act,
+#            'layers': layers,
+#            'input_shape': (args.picture_size, args.picture_size, 1)
+#        }
+#
+#        model = complex_model(**kwargs)
+#        train_model(args.name + "_%d" % i, model, kwargs) 
